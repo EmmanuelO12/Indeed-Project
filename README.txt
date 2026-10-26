@@ -6,6 +6,14 @@ with HTML, CSS and JavaScript. We didn't use any frameworks, so there is
 nothing to install.
 
 
+TEAM MEMBERS
+------------
+ Emmanuel Owusu
+ Lamar Cooper
+ Tithi Thakkar
+ James Paek
+
+
 HOW TO RUN IT
 -------------
 
