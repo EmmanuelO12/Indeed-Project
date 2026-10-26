@@ -727,75 +727,7 @@ button {
   margin: var(--space-3) var(--space-4) var(--space-4);
 }
 
-/* ---------- Job cards ---------- */
-.card-list {
-  display: grid;
-  gap: var(--space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
 
-.job-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-height: 160px;
-  padding: var(--space-4) var(--space-5);
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-card);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.job-card:hover {
-  border-color: var(--gray-400);
-}
-
-.job-card.is-selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
-.job-card:has(.job-card__link:focus-visible) {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.job-card__title {
-  margin-bottom: var(--space-2);
-  font-size: var(--fs-xl);
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.job-card__link {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  color: inherit;
-}
-
-.job-card__link:focus-visible {
-  outline: none;
-}
-
-/* Makes the whole card clickable. */
-.job-card__link::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-card);
-}
-
-.job-card__meta {
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
-}
 
 /* ---------- Home: selected job description ---------- */
 .job-detail {
