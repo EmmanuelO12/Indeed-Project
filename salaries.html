@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Find Salaries | Indeed</title>
+  <meta name="description" content="Compare salaries by job title and location so you know your worth.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+  <script>
+    try { document.documentElement.dataset.theme = localStorage.getItem("theme") === "dark" ? "dark" : "light"; } catch (e) {}
+  </script>
+  <script src="js/main.js" defer></script>
+</head>
+<body class="has-tabbar">
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1"/></symbol>
+    <symbol id="i-salary" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .8 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6.5V8M12 16v1.5"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.5"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8M15 7h6v6"/></symbol>
+  </svg>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-bar">
+      <a class="logo" href="index.html" aria-label="Indeed – start page">indeed</a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="menu-toggle__bars" aria-hidden="true"></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Main">
+        <ul class="nav-list">
+          <li class="nav-item nav-item--text nav-item--tab"><a class="nav-link" href="home.html"><svg class="icon" aria-hidden="true"><use href="#i-home"></use></svg><span>Home</span></a></li>
+          <li class="nav-item nav-item--text"><a class="nav-link" href="company-reviews.html"><svg class="icon" aria-hidden="true"><use href="#i-building"></use></svg><span>Company Reviews</span></a></li>
+          <li class="nav-item nav-item--text"><a class="nav-link" href="salaries.html" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#i-salary"></use></svg><span>Find Salaries</span></a></li>
+          <li class="nav-item nav-item--icon nav-item--tab nav-item--group-start"><a class="nav-link" href="applications.html"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>My Applications</span></a></li>
+          <li class="nav-item nav-item--icon nav-item--tab"><a class="nav-link" href="messages.html"><svg class="icon" aria-hidden="true"><use href="#i-chat"></use></svg><span>Messages</span></a></li>
+          <li class="nav-item nav-item--icon nav-item--first-mobile"><a class="nav-link" href="notifications.html"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span>Notifications</span></a></li>
+          <li class="nav-item nav-item--icon"><a class="nav-link" href="account.html"><svg class="icon" aria-hidden="true"><use href="#i-user"></use></svg><span>Account</span></a></li>
+          <li class="nav-item nav-item--icon nav-item--tab"><a class="nav-link" href="career-scout.html"><svg class="icon" aria-hidden="true"><use href="#i-compass"></use></svg><span>Career Scout</span></a></li>
+          <li class="nav-item nav-item--text nav-item--end"><a class="nav-link" href="employers.html"><svg class="icon" aria-hidden="true"><use href="#i-briefcase"></use></svg><span>Employers / Post Job</span></a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="header-search">
+      <form class="search-form search-form--compact" action="search.html" method="get" role="search" autocomplete="off">
+        <div class="search-field">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+          <label class="visually-hidden" for="q-compact">What</label>
+          <input id="q-compact" name="q" type="text" placeholder="Job title, keywords, or company" data-suggest="what" autocomplete="off">
+        </div>
+        <div class="search-field">
+          <svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg>
+          <label class="visually-hidden" for="l-compact">Where</label>
+          <input id="l-compact" name="l" type="text" placeholder="City, state, zip code, or &quot;Remote&quot;" data-suggest="where" autocomplete="off">
+        </div>
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+    </div>
+  </header>
+
+  <main id="main" class="page">
+    <h1 class="page-title">Find Salaries</h1>
+    <section class="panel empty-state">
+      <span class="empty-state__icon"><svg class="icon" aria-hidden="true"><use href="#i-salary"></use></svg></span>
+      <h2>Discover your earning potential</h2>
+      <p>Compare salaries by job title and location so you know your worth.</p>
+      <a class="btn btn-primary" href="search.html">Search Jobs</a>
+    </section>
+  </main>
+
+  <nav class="tab-bar" aria-label="Sections">
+    <ul class="tab-bar__list">
+      <li><a class="tab-link" href="home.html"><svg class="icon" aria-hidden="true"><use href="#i-home"></use></svg><span>Home</span></a></li>
+      <li><a class="tab-link" href="messages.html"><svg class="icon" aria-hidden="true"><use href="#i-chat"></use></svg><span>Messages</span></a></li>
+      <li><a class="tab-link" href="search.html"><svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><span>Search</span></a></li>
+      <li><a class="tab-link" href="applications.html"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>My Applications</span></a></li>
+      <li><a class="tab-link" href="career-scout.html"><svg class="icon" aria-hidden="true"><use href="#i-compass"></use></svg><span>Career Scout</span></a></li>
+    </ul>
+  </nav>
+
+  <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Dark mode">
+    <span class="theme-toggle__opt theme-toggle__opt--light"><svg class="icon" aria-hidden="true"><use href="#i-sun"></use></svg></span>
+    <span class="theme-toggle__opt theme-toggle__opt--dark"><svg class="icon" aria-hidden="true"><use href="#i-moon"></use></svg></span>
+  </button>
+</body>
+</html>
