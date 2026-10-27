@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
@@ -5,16 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Find Salaries | Indeed</title>
   <meta name="description" content="Compare salaries by job title and location so you know your worth.">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap">
   <link rel="stylesheet" href="css/styles.css">
+
   <script>
-    try { document.documentElement.dataset.theme = localStorage.getItem("theme") === "dark" ? "dark" : "light"; } catch (e) {}
+    try {
+      document.documentElement.dataset.theme =
+        localStorage.getItem("theme") === "dark" ? "dark" : "light";
+    } catch (e) {}
   </script>
   <script src="js/main.js" defer></script>
 </head>
+
 <body class="has-tabbar">
+  <!-- Icons -->
   <svg class="sprite" aria-hidden="true" focusable="false">
     <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
@@ -42,12 +50,16 @@
   </svg>
 
   <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- Header -->
   <header class="site-header">
     <div class="header-bar">
       <a class="logo" href="index.html" aria-label="Indeed – start page">indeed</a>
+
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
         <span class="menu-toggle__bars" aria-hidden="true"></span>
       </button>
+
       <nav id="site-nav" class="site-nav" aria-label="Main">
         <ul class="nav-list">
           <li class="nav-item nav-item--text nav-item--tab"><a class="nav-link" href="home.html"><svg class="icon" aria-hidden="true"><use href="#i-home"></use></svg><span>Home</span></a></li>
@@ -62,6 +74,8 @@
         </ul>
       </nav>
     </div>
+
+    <!-- Job Search -->
     <div class="header-search">
       <form class="search-form search-form--compact" action="search.html" method="get" role="search" autocomplete="off">
         <div class="search-field">
@@ -69,26 +83,33 @@
           <label class="visually-hidden" for="q-compact">What</label>
           <input id="q-compact" name="q" type="text" placeholder="Job title, keywords, or company" data-suggest="what" autocomplete="off">
         </div>
+
         <div class="search-field">
           <svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg>
           <label class="visually-hidden" for="l-compact">Where</label>
           <input id="l-compact" name="l" type="text" placeholder="City, state, zip code, or &quot;Remote&quot;" data-suggest="where" autocomplete="off">
         </div>
+
         <button class="btn btn-primary" type="submit">Search</button>
       </form>
     </div>
   </header>
 
+  <!-- Salaries -->
   <main id="main" class="page">
     <h1 class="page-title">Find Salaries</h1>
+
     <section class="panel empty-state">
-      <span class="empty-state__icon"><svg class="icon" aria-hidden="true"><use href="#i-salary"></use></svg></span>
+      <span class="empty-state__icon">
+        <svg class="icon" aria-hidden="true"><use href="#i-salary"></use></svg>
+      </span>
       <h2>Discover your earning potential</h2>
       <p>Compare salaries by job title and location so you know your worth.</p>
       <a class="btn btn-primary" href="search.html">Search Jobs</a>
     </section>
   </main>
 
+  <!-- Mobile Tab Bar -->
   <nav class="tab-bar" aria-label="Sections">
     <ul class="tab-bar__list">
       <li><a class="tab-link" href="home.html"><svg class="icon" aria-hidden="true"><use href="#i-home"></use></svg><span>Home</span></a></li>
@@ -99,9 +120,11 @@
     </ul>
   </nav>
 
+  <!-- Theme Toggle -->
   <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Dark mode">
     <span class="theme-toggle__opt theme-toggle__opt--light"><svg class="icon" aria-hidden="true"><use href="#i-sun"></use></svg></span>
     <span class="theme-toggle__opt theme-toggle__opt--dark"><svg class="icon" aria-hidden="true"><use href="#i-moon"></use></svg></span>
   </button>
 </body>
 </html>
+```
