@@ -1,9 +1,13 @@
-Indeed - Responsive Implementation
-==================================
+Indeed - Interactive Search & Micro-Interactions
+================================================
 
 This is our Indeed job search prototype from Figma, built as a real website
 with HTML, CSS and JavaScript. We didn't use any frameworks, so there is
 nothing to install.
+
+This version builds on our responsive implementation and adds live search
+with suggestions, loading states and small animations (see "WHAT'S NEW THIS
+WEEK" below).
 
 
 TEAM MEMBERS
@@ -39,6 +43,58 @@ click index.html and pick "Open with Live Server".
 
 Note: the font (Inter) loads from Google Fonts, so you need internet for it.
 Without internet the site still works, it just uses the normal system font.
+
+
+WHAT'S NEW THIS WEEK
+--------------------
+
+Our site doesn't have a real server, so anything that would normally load
+from one (job listings, saving a status, signing in) waits about half a
+second on purpose. That way you can see the loading states the same way you
+would on a real site.
+
+1. Live search (search.html)
+   - Start typing in the job title box. The job results filter right away
+     as you type, and you don't need to press Search.
+   - A list of suggestions shows under the box and updates with every letter.
+     The part that matches what you typed is in bold. Click one, or use the
+     arrow keys and Enter.
+   - Type something that doesn't exist, like "astronaut". The suggestions say
+     "No matches" and the results show a "No jobs found" message with a
+     Clear search button.
+   - Delete everything in the box. The suggestions go away and all the jobs
+     come back.
+   - The location box works the same way (try "Remote" or "Charlotte").
+
+2. Loading states
+   - search.html: grey shimmering placeholder cards show while the jobs load,
+     and the Search button changes to "Searching..." while it works.
+   - home.html: click a job card and the description panel shows a
+     placeholder first, then the job details.
+   - applications.html: the list shows placeholders while it loads. When you
+     click Save in the status popup, the button changes to "Saving..." and
+     the buttons can't be clicked again until it's done. Then the popup closes
+     and a message pops up saying the status was updated.
+   - If saving fails (for example, if the browser blocks saving data), the
+     popup stays open and shows an error message instead of spinning forever.
+   - signin.html: picking the account or clicking Next shows a spinner before
+     it goes to the welcome screen. If you open "Sign in to another account"
+     and click Next with the box empty or with a wrong email, it shows an
+     error message.
+   - welcome.html: the loading spinner before "Welcome".
+
+3. Animations (each one has a reason)
+   - Job cards lift up a little with a shadow when you hover over them, so
+     you can tell the whole card is clickable.
+   - Search results, the job description and the application cards fade in
+     and slide up a little when they load, so it's easy to see what changed.
+   - The suggestions list and the status popup ease in instead of just
+     popping up.
+   - The "status updated" message slides in, then fades away on its own.
+   - Buttons and search boxes smoothly change color when you hover or click
+     into them.
+   - If your computer has "reduce motion" turned on, the animations are
+     turned off.
 
 
 HOW TO TEST MOBILE AND DESKTOP
@@ -120,6 +176,19 @@ README.txt            - this file
 HOW WE MET THE REQUIREMENTS
 ---------------------------
 
+This week (interactive search and micro-interactions):
+- Search filters the results and the suggestions in real time with every
+  letter typed, not when the form is submitted.
+- Clearing the box hides the suggestions and resets the results.
+- There's a "No matches" message in the suggestions and a "No jobs found"
+  message in the results.
+- Every action with a delay shows a loading state (placeholder cards,
+  spinners, "Saving..." / "Searching..." / "Signing in..." buttons), and
+  buttons are disabled while they work. Failed saves show an error message.
+- More than two animations, each with a purpose (listed above).
+- We checked that there are no errors in the browser console on any page.
+
+Last week (responsive implementation):
 - Mobile first: the main CSS is written for phones first. Then we used
   min-width media queries at 768px and 1100px to change the layout for
   tablets and desktop.
