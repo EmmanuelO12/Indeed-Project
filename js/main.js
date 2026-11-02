@@ -185,14 +185,84 @@
     write(key, value) {
       try {
         localStorage.setItem(key, JSON.stringify(value));
+        return true;
       } catch (error) {
-        /* Storage can be unavailable (e.g. private browsing); the page still works without saving. */
+        return false;
       }
     },
   };
 
   const findJob = (id) => JOBS.find((job) => job.id === id);
   const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="#${name}"></use></svg>`;
+
+  const escapeHtml = (text) =>
+    String(text).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+
+  const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+  /* There is no real server, so data "requests" resolve after a short, realistic delay. */
+  const NETWORK_DELAY = 600;
+  const fetchJobs = () => wait(NETWORK_DELAY).then(() => JOBS);
+
+  /* ---------- Loading buttons ---------- */
+  function setBusy(element, busy, label) {
+    if (busy) {
+      if (element.classList.contains("is-loading")) return;
+      element.dataset.idleHtml = element.innerHTML;
+      if (label) element.innerHTML = `<span class="btn-spinner" aria-hidden="true"></span>${escapeHtml(label)}`;
+      element.classList.add("is-loading");
+      element.setAttribute("aria-busy", "true");
+      if ("disabled" in element) element.disabled = true;
+      else element.setAttribute("aria-disabled", "true");
+    } else {
+      if (!element.classList.contains("is-loading")) return;
+      element.innerHTML = element.dataset.idleHtml;
+      element.classList.remove("is-loading");
+      element.removeAttribute("aria-busy");
+      if ("disabled" in element) element.disabled = false;
+      else element.removeAttribute("aria-disabled");
+    }
+  }
+
+  /* Pages restored with the Back button keep their old DOM, so clear any stuck loading state. */
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) document.querySelectorAll(".is-loading").forEach((element) => setBusy(element, false));
+  });
+
+  /* ---------- Toast messages ---------- */
+  let toastTimer;
+  function showToast(message, tone) {
+    let toast = document.querySelector(".toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.className = "toast";
+      toast.setAttribute("role", "status");
+      document.body.appendChild(toast);
+    }
+    toast.classList.toggle("toast--error", tone === "error");
+    toast.innerHTML = `${icon(tone === "error" ? "i-close" : "i-check")}<span>${escapeHtml(message)}</span>`;
+    void toast.offsetWidth;
+    toast.classList.add("is-visible");
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 3200);
+  }
+
+  const skeletonJobCard = `
+    <li class="job-card job-card--skeleton" aria-hidden="true">
+      <span class="skeleton skeleton--title"></span>
+      <span class="skeleton skeleton--line"></span>
+      <span class="skeleton skeleton--line skeleton--short"></span>
+    </li>`;
+
+  const skeletonAppCard = `
+    <li class="app-card app-card--skeleton" aria-hidden="true">
+      <span class="skeleton skeleton--thumb"></span>
+      <div class="app-card__body">
+        <span class="skeleton skeleton--tag"></span>
+        <span class="skeleton skeleton--title"></span>
+        <span class="skeleton skeleton--line"></span>
+      </div>
+    </li>`;
 
   /* ---------- Light / dark mode ---------- */
   function initTheme() {
@@ -331,20 +401,39 @@
         if (!open) input.removeAttribute("aria-activedescendant");
       };
 
+      const markMatch = (text, query) => {
+        const start = text.toLowerCase().indexOf(query);
+        if (!query || start < 0) return escapeHtml(text);
+        const end = start + query.length;
+        return `${escapeHtml(text.slice(0, start))}<mark>${escapeHtml(text.slice(start, end))}</mark>${escapeHtml(text.slice(end))}`;
+      };
+
       const render = () => {
-        const query = input.value.trim().toLowerCase();
+        const typed = input.value.trim();
+        const query = typed.toLowerCase();
         options = source.filter((item) => !query || item.toLowerCase().includes(query)).slice(0, 6);
-        if (options.length === 1 && options[0].toLowerCase() === query) options = [];
+        const exact = options.length === 1 && options[0].toLowerCase() === query;
+        if (exact) options = [];
         active = -1;
+
+        if (!options.length) {
+          list.innerHTML =
+            query && !exact
+              ? `<li class="suggest__empty" role="option" aria-disabled="true" aria-selected="false">No matches for “${escapeHtml(typed)}”</li>`
+              : "";
+          setOpen(Boolean(list.innerHTML));
+          return;
+        }
+
         list.innerHTML = options
           .map(
             (item, i) => `
             <li id="${list.id}-${i}" class="suggest__item" role="option" aria-selected="false" data-index="${i}">
-              ${icon(isWhere ? "i-pin" : "i-search")}<span>${item}</span>${isWhere ? icon("i-chevron-right") : ""}
+              ${icon(isWhere ? "i-pin" : "i-search")}<span>${markMatch(item, query)}</span>${isWhere ? icon("i-chevron-right") : ""}
             </li>`
           )
           .join("");
-        setOpen(options.length > 0);
+        setOpen(true);
       };
 
       const highlight = (i) => {
@@ -357,11 +446,12 @@
       const choose = (i) => {
         input.value = options[i];
         setOpen(false);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
       };
 
       input.addEventListener("focus", render);
       input.addEventListener("click", () => list.hidden && render());
-      input.addEventListener("input", render);
+      input.addEventListener("input", () => (input.value.trim() ? render() : setOpen(false)));
       input.addEventListener("blur", () => setOpen(false));
 
       input.addEventListener("keydown", (event) => {
@@ -369,6 +459,11 @@
           if (event.key === "ArrowDown") render();
           return;
         }
+        if (event.key === "Escape") {
+          setOpen(false);
+          return;
+        }
+        if (!options.length) return;
         if (event.key === "ArrowDown") {
           event.preventDefault();
           highlight((active + 1) % options.length);
@@ -378,8 +473,6 @@
         } else if (event.key === "Enter" && active >= 0) {
           event.preventDefault();
           choose(active);
-        } else if (event.key === "Escape") {
-          setOpen(false);
         }
       });
 
@@ -398,8 +491,20 @@
   }
 
   /* ---------- Home: job cards + selected job description ---------- */
+  const skeletonJobDetail = `
+    <div aria-hidden="true">
+      <p class="eyebrow">Selected Job Description</p>
+      <span class="skeleton skeleton--heading"></span>
+      <span class="skeleton skeleton--line"></span>
+      <span class="skeleton skeleton--block"></span>
+      <span class="skeleton skeleton--line skeleton--wide"></span>
+      <span class="skeleton skeleton--line skeleton--wide"></span>
+      <span class="skeleton skeleton--line"></span>
+    </div>`;
+
   function renderJobDetail(job) {
     return `
+      <div class="is-entering">
       <p class="eyebrow">Selected Job Description</p>
       <h2 class="job-detail__title">${job.title}</h2>
       <p class="job-detail__meta">${job.company} · ${job.location}</p>
@@ -413,6 +518,7 @@
       <div class="job-detail__actions">
         <a class="btn btn-primary" href="applications.html">Apply now</a>
         <a class="btn btn-outline" href="search.html?q=${encodeURIComponent(job.title)}">Similar jobs</a>
+      </div>
       </div>`;
   }
 
@@ -421,20 +527,29 @@
     if (!detail) return;
     const cards = Array.from(document.querySelectorAll(".job-card[data-job-id]"));
 
-    function select(id, scroll) {
+    let request = 0;
+
+    async function select(id, scroll) {
       const job = findJob(id);
       if (!job) return;
+      const current = ++request;
       cards.forEach((card) => {
         const active = card.dataset.jobId === id;
         card.classList.toggle("is-selected", active);
         card.querySelector(".job-card__link").setAttribute("aria-pressed", String(active));
       });
-      detail.innerHTML = renderJobDetail(job);
+      detail.innerHTML = skeletonJobDetail;
+      detail.setAttribute("aria-busy", "true");
       detail.classList.add("is-visible");
       if (scroll && !DESKTOP_QUERY.matches) {
         detail.scrollIntoView({ behavior: "smooth", block: "start" });
         detail.focus({ preventScroll: true });
       }
+
+      await wait(NETWORK_DELAY - 150);
+      if (current !== request) return;
+      detail.innerHTML = renderJobDetail(job);
+      detail.removeAttribute("aria-busy");
     }
 
     cards.forEach((card) => {
@@ -450,49 +565,125 @@
     const results = document.querySelector("[data-search-results]");
     if (!results) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const what = (params.get("q") || "").trim();
-    const where = (params.get("l") || "").trim();
-
     const form = document.querySelector("[data-search-page]");
+    const summary = document.querySelector("[data-results-summary]");
+    const submitButton = form && form.querySelector('button[type="submit"]');
+    const params = new URLSearchParams(window.location.search);
+    let jobs = null;
+    let shownIds = null;
+
     if (form) {
-      form.elements.q.value = what;
-      form.elements.l.value = where;
+      form.elements.q.value = (params.get("q") || "").trim();
+      form.elements.l.value = (params.get("l") || "").trim();
     }
 
-    const words = what.toLowerCase().split(/\s+/).filter(Boolean);
-    const place = where === CURRENT_LOCATION ? "" : where.toLowerCase();
-    const matches = JOBS.filter((job) => {
-      const haystack = [job.title, job.company, ...job.keywords].join(" ").toLowerCase();
-      const matchesWhat = words.every((word) => haystack.includes(word));
-      const matchesWhere = !place || job.location.toLowerCase().includes(place);
-      return matchesWhat && matchesWhere;
+    const currentQuery = () => ({
+      what: form ? form.elements.q.value.trim() : (params.get("q") || "").trim(),
+      where: form ? form.elements.l.value.trim() : (params.get("l") || "").trim(),
     });
 
-    const summary = document.querySelector("[data-results-summary]");
-    if (what || where) {
-      summary.textContent =
-        `${matches.length} ${matches.length === 1 ? "job" : "jobs"}` +
-        (what ? ` for “${what}”` : "") +
-        (where ? ` in ${where}` : "");
+    function filterJobs(what, where) {
+      const words = what.toLowerCase().split(/\s+/).filter(Boolean);
+      const place = where === CURRENT_LOCATION ? "" : where.toLowerCase();
+      return jobs.filter((job) => {
+        const haystack = [job.title, job.company, ...job.keywords].join(" ").toLowerCase();
+        const matchesWhat = words.every((word) => haystack.includes(word));
+        const matchesWhere = !place || job.location.toLowerCase().includes(place);
+        return matchesWhat && matchesWhere;
+      });
     }
 
-    results.innerHTML = matches.length
-      ? matches
-          .map(
-            (job) => `
-        <li class="job-card">
-          <h3 class="job-card__title"><a class="job-card__link" href="home.html?job=${job.id}">${job.title}</a></h3>
-          <p class="job-card__meta">${job.company}</p>
-          <p class="job-card__meta">${job.location}</p>
-        </li>`
-          )
-          .join("")
-      : `<li class="panel empty-state">
-          <h3>No jobs found</h3>
-          <p>Try a different job title, keyword, or location.</p>
-          <a class="btn btn-primary" href="search.html">Clear search</a>
-        </li>`;
+    const jobCard = (job, i) => `
+      <li class="job-card is-entering" style="animation-delay: ${i * 50}ms">
+        <h3 class="job-card__title"><a class="job-card__link" href="home.html?job=${job.id}">${job.title}</a></h3>
+        <p class="job-card__meta">${job.company}</p>
+        <p class="job-card__meta">${job.location}</p>
+      </li>`;
+
+    function showSkeleton() {
+      shownIds = null;
+      summary.textContent = "Loading jobs…";
+      results.setAttribute("aria-busy", "true");
+      results.innerHTML = skeletonJobCard.repeat(3);
+    }
+
+    function update() {
+      const { what, where } = currentQuery();
+      const matches = filterJobs(what, where);
+
+      summary.textContent =
+        what || where
+          ? `${matches.length} ${matches.length === 1 ? "job" : "jobs"}` +
+            (what ? ` for “${what}”` : "") +
+            (where ? ` in ${where}` : "")
+          : "Recommended jobs";
+
+      try {
+        const url = new URL(window.location.href);
+        url.search = new URLSearchParams({ ...(what && { q: what }), ...(where && { l: where }) }).toString();
+        window.history.replaceState(null, "", url);
+      } catch (error) {
+        /* Chrome blocks this on pages opened straight from a file; the search still works. */
+      }
+
+      // Only re-render when the set of jobs changes, so cards don't flicker on every keystroke.
+      const ids = matches.length ? matches.map((job) => job.id).join() : `none:${what}|${where}`;
+      if (ids === shownIds) return;
+      shownIds = ids;
+      results.removeAttribute("aria-busy");
+      results.innerHTML = matches.length
+        ? matches.map(jobCard).join("")
+        : `<li class="panel empty-state is-entering">
+            <span class="empty-state__icon">${icon("i-search")}</span>
+            <h3>No jobs found</h3>
+            <p>Nothing matches ${escapeHtml([what && `“${what}”`, where && `in ${where}`].filter(Boolean).join(" "))}. Try a different job title, keyword, or location.</p>
+            <button type="button" class="btn btn-primary" data-clear-search>Clear search</button>
+          </li>`;
+    }
+
+    async function load() {
+      showSkeleton();
+      if (submitButton) setBusy(submitButton, true, "Searching…");
+      try {
+        jobs = await fetchJobs();
+        update();
+      } catch (error) {
+        summary.textContent = "Something went wrong";
+        results.removeAttribute("aria-busy");
+        results.innerHTML = `<li class="panel empty-state">
+            <h3>We couldn't load jobs</h3>
+            <p>Check your connection and try again.</p>
+            <button type="button" class="btn btn-primary" data-retry-search>Try again</button>
+          </li>`;
+      } finally {
+        if (submitButton) setBusy(submitButton, false);
+      }
+    }
+
+    if (form) {
+      form.addEventListener("input", () => jobs && update());
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!jobs) return;
+        setBusy(submitButton, true, "Searching…");
+        showSkeleton();
+        await wait(NETWORK_DELAY - 200);
+        update();
+        setBusy(submitButton, false);
+      });
+    }
+
+    results.addEventListener("click", (event) => {
+      if (event.target.closest("[data-retry-search]")) load();
+      if (event.target.closest("[data-clear-search]") && form) {
+        form.reset();
+        update();
+        summary.setAttribute("tabindex", "-1");
+        summary.focus();
+      }
+    });
+
+    load();
   }
 
   /* ---------- My Applications ---------- */
@@ -501,16 +692,20 @@
     const dialog = document.getElementById("status-dialog");
     if (!list || !dialog) return;
 
-    const live = document.querySelector("[data-live]");
+    const dialogForm = dialog.querySelector("form");
     const dialogJob = dialog.querySelector("[data-dialog-job]");
+    const dialogError = dialog.querySelector("[data-dialog-error]");
+    const saveButton = dialog.querySelector('button[value="save"]');
+    const dialogButtons = Array.from(dialog.querySelectorAll("button"));
+    let saving = false;
     const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
     const defaults = Object.fromEntries(APPLICATION_ORDER.map((id) => [id, "applied"]));
     const statuses = Object.assign(defaults, store.read("applicationStatuses", {}));
     let activeFilter = "all";
     let editingId = null;
 
-    const card = (job) => `
-      <li class="app-card">
+    const card = (job, i) => `
+      <li class="app-card is-entering" style="animation-delay: ${i * 50}ms">
         <div class="app-card__thumb">${icon("i-image")}</div>
         <div class="app-card__body">
           <span class="tag">${STATUS_LABELS[statuses[job.id]]}</span>
@@ -538,10 +733,14 @@
     }
 
     function save(id, status) {
+      const previous = statuses[id];
       statuses[id] = status;
-      store.write("applicationStatuses", statuses);
+      if (!store.write("applicationStatuses", statuses)) {
+        statuses[id] = previous;
+        return false;
+      }
       render();
-      live.textContent = `${findJob(id).title} marked as ${STATUS_LABELS[status]}.`;
+      return true;
     }
 
     function closeMenus(except) {
@@ -572,7 +771,7 @@
         dialog.querySelectorAll('input[name="status"]').forEach((input) => {
           input.checked = input.value === statuses[editingId];
         });
-        dialog.returnValue = "";
+        dialogError.hidden = true;
         dialog.showModal();
       } else if (more) {
         const open = more.getAttribute("aria-expanded") !== "true";
@@ -580,7 +779,9 @@
         more.setAttribute("aria-expanded", String(open));
         more.nextElementSibling.hidden = !open;
       } else if (archive) {
-        save(archive.dataset.archive, "archived");
+        const job = findJob(archive.dataset.archive);
+        if (save(job.id, "archived")) showToast(`${job.title} moved to Archived`);
+        else showToast("Couldn't archive this application. Please try again.", "error");
       }
     });
 
@@ -593,20 +794,54 @@
     });
 
     dialog.addEventListener("click", (event) => {
-      if (event.target === dialog) dialog.close();
+      if (event.target === dialog && !saving) dialog.close();
+    });
+
+    dialog.addEventListener("cancel", (event) => {
+      if (saving) event.preventDefault();
+    });
+
+    dialogForm.addEventListener("submit", async (event) => {
+      if (event.submitter !== saveButton) return;
+      event.preventDefault();
+      const chosen = dialog.querySelector('input[name="status"]:checked');
+      if (!chosen || chosen.value === statuses[editingId]) {
+        dialog.close();
+        return;
+      }
+
+      saving = true;
+      dialogError.hidden = true;
+      dialogButtons.forEach((button) => (button.disabled = true));
+      setBusy(saveButton, true, "Saving…");
+      await wait(NETWORK_DELAY + 200);
+      const job = findJob(editingId);
+      const saved = save(editingId, chosen.value);
+      saving = false;
+      setBusy(saveButton, false);
+      dialogButtons.forEach((button) => (button.disabled = false));
+
+      if (saved) {
+        dialog.close();
+        showToast(`${job.title} marked as ${STATUS_LABELS[chosen.value]}`);
+      } else {
+        dialogError.textContent = "We couldn't save your status. Make sure your browser allows saving data, then try again.";
+        dialogError.hidden = false;
+      }
     });
 
     dialog.addEventListener("close", () => {
-      const chosen = dialog.querySelector('input[name="status"]:checked');
-      if (dialog.returnValue === "save" && chosen && editingId && chosen.value !== statuses[editingId]) {
-        save(editingId, chosen.value);
-      }
       const trigger = list.querySelector(`[data-update="${editingId}"]`);
       if (trigger) trigger.focus();
       editingId = null;
     });
 
-    render();
+    list.setAttribute("aria-busy", "true");
+    list.innerHTML = skeletonAppCard.repeat(3);
+    fetchJobs().then(() => {
+      list.removeAttribute("aria-busy");
+      render();
+    });
   }
 
   /* ---------- Google sign-in ---------- */
@@ -615,13 +850,51 @@
     const toggles = document.querySelectorAll("[data-other-toggle]");
     if (!form || !toggles.length) return;
 
+    const email = form.querySelector("input");
+    const emailError = document.getElementById("email-error");
+    const nextLink = document.querySelector("[data-signin-next]");
+
     toggles.forEach((toggle) => {
       toggle.addEventListener("click", () => {
         form.hidden = false;
         toggles.forEach((other) => other.setAttribute("aria-expanded", "true"));
-        form.querySelector("input").focus();
+        email.focus();
       });
     });
+
+    const looksValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || /^\+?[\d\s().-]{7,}$/.test(value);
+
+    function showEmailError(message) {
+      emailError.textContent = message;
+      emailError.hidden = !message;
+      email.setAttribute("aria-invalid", String(Boolean(message)));
+    }
+
+    async function continueTo(trigger) {
+      if (trigger === nextLink && !form.hidden) {
+        const value = email.value.trim();
+        if (!value) return showEmailError("Enter an email or phone number.");
+        if (!looksValid(value)) return showEmailError("That doesn't look like a valid email or phone number.");
+      }
+      showEmailError("");
+      setBusy(trigger, true, trigger === nextLink ? "Signing in…" : null);
+      await wait(NETWORK_DELAY + 200);
+      window.location.assign("welcome.html");
+    }
+
+    document.querySelectorAll('.google a[href="welcome.html"]').forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (!link.classList.contains("is-loading")) continueTo(link);
+      });
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      continueTo(nextLink);
+    });
+
+    email.addEventListener("input", () => email.getAttribute("aria-invalid") === "true" && showEmailError(""));
   }
 
   /* ---------- Loading -> Welcome -> Home ---------- */
