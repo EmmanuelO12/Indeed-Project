@@ -619,6 +619,10 @@ button {
   font-weight: 600;
 }
 
+.home-layout .section-title {
+  margin-top: 0;
+}
+
 .panel {
   padding: var(--space-5);
   background: var(--surface);
