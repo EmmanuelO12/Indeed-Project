@@ -270,12 +270,7 @@
     if (!button) return;
     const root = document.documentElement;
 
-const sync = () => {
-  const isDark = root.dataset.theme === "dark";
-
-  button.setAttribute("aria-pressed", String(isDark));
-  button.setAttribute("aria-label", isDark ? "Dark mode" : "Light mode");
-};
+    const sync = () => button.setAttribute("aria-pressed", String(root.dataset.theme === "dark"));
 
     button.addEventListener("click", () => {
       root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
