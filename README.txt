@@ -152,8 +152,13 @@ THINGS TO TRY
    then click Save and the tag on the card changes. Cancel closes it without
    changing anything. You can filter with the tabs at the top, and the "..."
    button has View job and Archive.
-7. The sun/moon button at the bottom switches between light and dark mode on
-   every page.
+7. Light and dark mode
+   - Go to the Account page and scroll down to Settings -> Appearance.
+   - Click the sun/moon button to switch between light and dark mode.
+   - Your preference is saved using localStorage, so the theme stays the
+     same when you refresh or navigate to another page.
+   - The floating theme buttons were removed from the other pages to
+     prevent them from overlapping content, especially on mobile.
 
 
 WHAT'S IN THE FOLDER

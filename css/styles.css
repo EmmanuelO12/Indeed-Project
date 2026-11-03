@@ -564,22 +564,16 @@ button {
 
 /* ---------- Light / dark toggle ---------- */
 .theme-toggle {
-  position: fixed;
-  bottom: var(--space-5);
-  left: 50%;
-  z-index: 45;
+  position: static;
   display: inline-flex;
+  flex-shrink: 0;
   gap: var(--space-1);
   padding: var(--space-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   background: var(--surface);
-  box-shadow: var(--shadow);
-  transform: translateX(-50%);
-}
-
-.has-tabbar .theme-toggle {
-  bottom: calc(var(--tabbar-h) + var(--space-3) + env(safe-area-inset-bottom));
+  box-shadow: none;
+  transform: none;
 }
 
 .theme-toggle__opt {
@@ -659,6 +653,17 @@ button {
   font-size: var(--fs-sm);
   color: var(--text-muted);
 }
+
+/* Keeping appearance controls aligned on smaller screens. */
+.settings__row > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings__row .theme-toggle {
+  margin-left: auto;
+}
+
 /* ---------- Search form ---------- */
 .search-form {
   display: flex;
@@ -1994,13 +1999,6 @@ a.is-loading {
 
   .card-list--grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .theme-toggle,
-  .has-tabbar .theme-toggle {
-    bottom: var(--space-5);
-    left: var(--space-5);
-    transform: none;
   }
 
   .logo--xl {
