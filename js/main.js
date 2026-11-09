@@ -928,7 +928,7 @@
     name(value) {
       const name = value.trim();
       if (!name) return "Enter your full name.";
-      if (!/^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(name)) return "Use letters only. Spaces, hyphens (-) and apostrophes (') are okay.";
+      if (!/^[A-Za-zÀ-ÖØ-öø-ÿ'. -]+$/.test(name)) return "Use letters only. Spaces, hyphens (-), apostrophes (') and periods (.) are okay.";
       if (name.length < 2) return "Name must be at least 2 letters long.";
       if (name.length > 50) return `Name can be at most 50 characters. Remove ${name.length - 50}.`;
       if (!/\S\s+\S/.test(name)) return "Enter your first and last name, with a space between them.";
@@ -982,6 +982,34 @@
     document.getElementById(`${input.id}-msg`).textContent = "";
   }
 
+  function updateFieldCount(form, formError) {
+    if (formError.hidden) return;
+    const count = form.querySelectorAll(".field.is-invalid").length;
+    formError.textContent = count === 1 ? "Fix the 1 field marked in red above." : `Fix the ${count} fields marked in red above.`;
+    formError.hidden = count === 0;
+  }
+
+  function updateRuleList(form, value) {
+    form.querySelectorAll("[data-rule]").forEach((item) => {
+      const met = PASSWORD_RULES[item.dataset.rule](value);
+      item.classList.toggle("is-met", met);
+      item.querySelector("[data-rule-status]").textContent = met ? ", done" : ", not yet";
+    });
+  }
+
+  function initShowPassword(form) {
+    form.querySelectorAll("[data-show-password]").forEach((button) => {
+      const input = document.getElementById(button.getAttribute("aria-controls"));
+      button.addEventListener("mousedown", (event) => event.preventDefault());
+      button.addEventListener("click", () => {
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        button.textContent = show ? "Hide" : "Show";
+        button.setAttribute("aria-pressed", String(show));
+      });
+    });
+  }
+
   function initSignup() {
     const form = document.querySelector("[data-signup]");
     if (!form) return;
@@ -1008,20 +1036,8 @@
       return !message;
     }
 
-    function updateFormError() {
-      if (formError.hidden) return;
-      const count = form.querySelectorAll(".field.is-invalid").length;
-      formError.textContent = count === 1 ? "Fix the 1 field marked in red above." : `Fix the ${count} fields marked in red above.`;
-      formError.hidden = count === 0;
-    }
-
-    function updatePasswordRules() {
-      form.querySelectorAll("[data-rule]").forEach((item) => {
-        const met = PASSWORD_RULES[item.dataset.rule](password.value);
-        item.classList.toggle("is-met", met);
-        item.querySelector("[data-rule-status]").textContent = met ? ", done" : ", not yet";
-      });
-    }
+    const updateFormError = () => updateFieldCount(form, formError);
+    const updatePasswordRules = () => updateRuleList(form, password.value);
 
     inputs.forEach((input) => {
       // Errors wait until the user leaves the field once, but a correct value is confirmed right away.
@@ -1045,16 +1061,7 @@
       });
     });
 
-    form.querySelectorAll("[data-show-password]").forEach((button) => {
-      const input = document.getElementById(button.getAttribute("aria-controls"));
-      button.addEventListener("mousedown", (event) => event.preventDefault());
-      button.addEventListener("click", () => {
-        const show = input.type === "password";
-        input.type = show ? "text" : "password";
-        button.textContent = show ? "Hide" : "Show";
-        button.setAttribute("aria-pressed", String(show));
-      });
-    });
+    initShowPassword(form);
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -1095,6 +1102,120 @@
     });
   }
 
+  /* ---------- Edit profile ---------- */
+  function initProfile() {
+    const form = document.querySelector("[data-profile]");
+    if (!form) return;
+
+    const inputs = Array.from(form.querySelectorAll(".field__input"));
+    const { name, email, phone, password, confirm } = form.elements;
+    const submit = form.querySelector('button[type="submit"]');
+    const formError = form.querySelector("[data-form-error]");
+    const touched = new Set();
+    let saved = store.read("profile", { name: "", email: "", phone: "" });
+    let submitting = false;
+
+    name.value = saved.name;
+    email.value = saved.email;
+    phone.value = saved.phone;
+
+    // A null result means the field is optional and left empty, so it gets no state at all.
+    const checks = {
+      ...SIGNUP_CHECKS,
+      password(value) {
+        if (!value && !confirm.value) return null;
+        if (!value) return "Enter your new password here too, or clear the Confirm box.";
+        return SIGNUP_CHECKS.password(value);
+      },
+      confirm(value) {
+        if (!value && !password.value) return null;
+        if (!value) return "Re-enter your new password to confirm it.";
+        if (value !== password.value) return "Passwords don't match. Make sure both are typed exactly the same.";
+        return "";
+      },
+    };
+
+    function check(input) {
+      const message = checks[input.name](input.value);
+      if (message === null) clearFieldState(input);
+      else setFieldState(input, message);
+      return !message;
+    }
+
+    const recheckPasswords = () => [password, confirm].forEach((input) => (touched.has(input) || input.value) && check(input));
+
+    inputs.forEach((input) => {
+      input.addEventListener("input", () => {
+        const message = checks[input.name](input.value);
+        if (touched.has(input)) check(input);
+        else if (message === "") setFieldState(input, "");
+        else clearFieldState(input);
+
+        if (input === password || input === confirm) {
+          updateRuleList(form, password.value);
+          recheckPasswords();
+        }
+        updateFieldCount(form, formError);
+      });
+
+      input.addEventListener("blur", () => {
+        if (submitting) return;
+        touched.add(input);
+        if (check(input) && input === phone && phone.value) phone.value = formatPhone(phone.value);
+        updateFieldCount(form, formError);
+      });
+    });
+
+    initShowPassword(form);
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (submitting) return;
+
+      inputs.forEach((input) => touched.add(input));
+      const results = inputs.map(check);
+      const firstInvalid = inputs[results.indexOf(false)];
+      if (firstInvalid) {
+        formError.hidden = false;
+        updateFieldCount(form, formError);
+        firstInvalid.focus();
+        return;
+      }
+      formError.hidden = true;
+
+      const next = { name: name.value.trim(), email: email.value.trim(), phone: formatPhone(phone.value) };
+      const passwordChanged = Boolean(password.value);
+      const detailsChanged = Object.keys(next).some((key) => next[key] !== saved[key]);
+      if (!detailsChanged && !passwordChanged) {
+        showToast("No changes to save");
+        return;
+      }
+
+      submitting = true;
+      inputs.forEach((input) => (input.readOnly = true));
+      setBusy(submit, true, "Saving…");
+      await wait(NETWORK_DELAY + 200);
+      submitting = false;
+      inputs.forEach((input) => (input.readOnly = false));
+      setBusy(submit, false);
+
+      if (!store.write("profile", next)) {
+        formError.textContent = "We couldn't save your profile. Make sure your browser allows saving data, then try again.";
+        formError.hidden = false;
+        return;
+      }
+
+      saved = next;
+      phone.value = next.phone;
+      password.value = "";
+      confirm.value = "";
+      touched.clear();
+      inputs.forEach(clearFieldState);
+      updateRuleList(form, "");
+      showToast(passwordChanged ? "Profile and password updated" : "Profile updated");
+    });
+  }
+
   /* ---------- Loading -> Welcome -> Home ---------- */
   function initWelcome() {
     const splash = document.querySelector("[data-welcome]");
@@ -1112,5 +1233,6 @@
   initApplications();
   initSignIn();
   initSignup();
+  initProfile();
   initWelcome();
 })();

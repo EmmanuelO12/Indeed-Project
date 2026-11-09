@@ -40,6 +40,7 @@
     <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
     <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8M15 7h6v6"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></symbol>
   </svg>
 
   <a class="skip-link" href="#main">Skip to content</a>
@@ -82,11 +83,79 @@
 
   <main id="main" class="page">
     <h1 class="page-title">Account</h1>
-    <section class="panel empty-state">
-      <span class="empty-state__icon"><svg class="icon" aria-hidden="true"><use href="#i-user"></use></svg></span>
-      <h2>Your account</h2>
-      <p>Manage your profile, resume, and job preferences.</p>
-      <a class="btn btn-primary" href="applications.html">View My Applications</a>
+    <section class="panel profile" aria-labelledby="profile-heading">
+      <h2 id="profile-heading" class="settings__title">Edit profile</h2>
+      <p class="settings__hint">Keep your details up to date so employers can reach you.</p>
+
+      <form class="profile__form" data-profile novalidate>
+        <div class="field">
+          <label class="field__label" for="profile-name">Full name</label>
+          <div class="field__control">
+            <input class="field__input" id="profile-name" name="name" type="text" autocomplete="name" data-success="Looks good." aria-describedby="profile-name-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+          </div>
+          <p class="field__msg" id="profile-name-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="profile-email">Email address</label>
+          <div class="field__control">
+            <input class="field__input" id="profile-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" data-success="Email looks good." aria-describedby="profile-email-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+          </div>
+          <p class="field__msg" id="profile-email-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="profile-phone">Phone number</label>
+          <p class="field__hint" id="profile-phone-hint">Include your area code.</p>
+          <div class="field__control">
+            <input class="field__input" id="profile-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(704) 555-0123" data-success="Phone number looks good." aria-describedby="profile-phone-hint profile-phone-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+          </div>
+          <p class="field__msg" id="profile-phone-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="profile__group">
+          <h3 class="settings__label">Change password</h3>
+          <p class="settings__hint">Optional. Leave both boxes empty to keep your current password.</p>
+        </div>
+
+        <div class="field field--password">
+          <label class="field__label" for="profile-password">New password</label>
+          <div class="field__control">
+            <input class="field__input" id="profile-password" name="password" type="password" autocomplete="new-password" data-success="Strong password." aria-describedby="profile-password-rules profile-password-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+            <button type="button" class="field__toggle" data-show-password aria-controls="profile-password" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <ul class="field__rules" id="profile-password-rules" aria-label="Password must have">
+            <li data-rule="length"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>At least 8 characters<span class="visually-hidden" data-rule-status>, not yet</span></li>
+            <li data-rule="upper"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>One uppercase letter (A–Z)<span class="visually-hidden" data-rule-status>, not yet</span></li>
+            <li data-rule="number"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>One number (0–9)<span class="visually-hidden" data-rule-status>, not yet</span></li>
+          </ul>
+          <p class="field__msg" id="profile-password-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="field field--password">
+          <label class="field__label" for="profile-confirm">Confirm new password</label>
+          <div class="field__control">
+            <input class="field__input" id="profile-confirm" name="confirm" type="password" autocomplete="new-password" data-success="Passwords match." aria-describedby="profile-confirm-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+            <button type="button" class="field__toggle" data-show-password aria-controls="profile-confirm" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <p class="field__msg" id="profile-confirm-msg" aria-live="polite"></p>
+        </div>
+
+        <p class="form-error" role="alert" data-form-error hidden></p>
+        <div class="profile__actions">
+          <button class="btn btn-primary" type="submit">Save changes</button>
+        </div>
+      </form>
     </section>
 
     <section class="panel settings" aria-labelledby="settings-heading">
