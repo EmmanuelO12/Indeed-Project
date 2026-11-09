@@ -38,6 +38,7 @@
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
     <symbol id="i-dots" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.5"/></symbol>
     <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-user-plus" viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M2 21a8 8 0 0 1 13.5-5.8M19 14v6M16 17h6"/></symbol>
     <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
     <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
@@ -47,6 +48,7 @@
     <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
     <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8M15 7h6v6"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></symbol>
   </svg>
 
   <!-- Sign In -->
@@ -80,13 +82,28 @@
             Sign in to another account
           </button>
         </li>
+
+        <li>
+          <a class="account" href="signup.html">
+            <span class="account__avatar" aria-hidden="true">
+              <svg class="icon" aria-hidden="true"><use href="#i-user-plus"></use></svg>
+            </span>
+            Create an Indeed account
+          </a>
+        </li>
       </ul>
 
       <!-- Other Account -->
-      <form id="other-account" class="google__other" action="welcome.html" method="get" hidden>
-        <label for="email">Email or phone</label>
-        <input id="email" name="email" type="text" inputmode="email" autocomplete="email" aria-describedby="email-error">
-        <p id="email-error" class="form-error" role="alert" hidden></p>
+      <form id="other-account" class="google__other" action="welcome.html" method="get" hidden novalidate>
+        <div class="field">
+          <label for="email">Email or phone</label>
+          <div class="field__control">
+            <input class="field__input" id="email" name="email" type="text" inputmode="email" autocomplete="email" data-success="Looks good." aria-describedby="email-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+          </div>
+          <p class="field__msg" id="email-msg" aria-live="polite"></p>
+        </div>
       </form>
 
       <div class="google__footer">

@@ -851,8 +851,8 @@
     if (!form || !toggles.length) return;
 
     const email = form.querySelector("input");
-    const emailError = document.getElementById("email-error");
     const nextLink = document.querySelector("[data-signin-next]");
+    let touched = false;
 
     toggles.forEach((toggle) => {
       toggle.addEventListener("click", () => {
@@ -862,21 +862,33 @@
       });
     });
 
-    const looksValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || /^\+?[\d\s().-]{7,}$/.test(value);
-
-    function showEmailError(message) {
-      emailError.textContent = message;
-      emailError.hidden = !message;
-      email.setAttribute("aria-invalid", String(Boolean(message)));
+    function checkEmail() {
+      const value = email.value.trim();
+      let message = "";
+      if (!value) message = "Enter your email or phone number.";
+      else if (/[@A-Za-z]/.test(value)) message = SIGNUP_CHECKS.email(value);
+      else message = SIGNUP_CHECKS.phone(value);
+      return message;
     }
+
+    email.addEventListener("blur", () => {
+      touched = true;
+      setFieldState(email, checkEmail());
+    });
+
+    email.addEventListener("input", () => {
+      if (touched) setFieldState(email, checkEmail());
+      else if (!checkEmail()) setFieldState(email, "");
+      else clearFieldState(email);
+    });
 
     async function continueTo(trigger) {
       if (trigger === nextLink && !form.hidden) {
-        const value = email.value.trim();
-        if (!value) return showEmailError("Enter an email or phone number.");
-        if (!looksValid(value)) return showEmailError("That doesn't look like a valid email or phone number.");
+        touched = true;
+        const message = checkEmail();
+        setFieldState(email, message);
+        if (message) return email.focus();
       }
-      showEmailError("");
       setBusy(trigger, true, trigger === nextLink ? "Signing in…" : null);
       await wait(NETWORK_DELAY + 200);
       window.location.assign("welcome.html");
@@ -893,8 +905,194 @@
       event.preventDefault();
       continueTo(nextLink);
     });
+  }
 
-    email.addEventListener("input", () => email.getAttribute("aria-invalid") === "true" && showEmailError(""));
+  /* ---------- Create account ---------- */
+  const PASSWORD_RULES = {
+    length: (value) => value.length >= 8,
+    upper: (value) => /[A-Z]/.test(value),
+    number: (value) => /\d/.test(value),
+  };
+
+  const phoneDigits = (value) => {
+    const digits = value.replace(/\D/g, "");
+    return digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  };
+
+  const formatPhone = (value) => {
+    const digits = phoneDigits(value);
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+
+  const SIGNUP_CHECKS = {
+    name(value) {
+      const name = value.trim();
+      if (!name) return "Enter your full name.";
+      if (!/^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(name)) return "Use letters only. Spaces, hyphens (-) and apostrophes (') are okay.";
+      if (name.length < 2) return "Name must be at least 2 letters long.";
+      if (name.length > 50) return `Name can be at most 50 characters. Remove ${name.length - 50}.`;
+      if (!/\S\s+\S/.test(name)) return "Enter your first and last name, with a space between them.";
+      return "";
+    },
+    email(value) {
+      const email = value.trim();
+      if (!email) return "Enter your email address.";
+      if (/\s/.test(email)) return "Email can't contain spaces. Remove any spaces.";
+      if (!email.includes("@")) return "Email needs an @ symbol, like name@example.com.";
+      const [user, domain, ...extra] = email.split("@");
+      if (extra.length) return "Email can only have one @ symbol.";
+      if (!user) return "Add your name before the @, like name@example.com.";
+      if (!domain) return "Add the email provider after the @, like gmail.com.";
+      if (domain.startsWith(".")) return "Add the email provider between the @ and the dot, like gmail.com.";
+      if (!domain.includes(".") || domain.endsWith(".")) return "Email is missing its ending, like .com or .org.";
+      if (!/^[A-Za-z]{2,}$/.test(domain.split(".").pop())) return "The ending after the last dot should be letters, like .com or .org.";
+      return "";
+    },
+    phone(value) {
+      const phone = value.trim();
+      if (!phone) return "Enter your phone number.";
+      if (/[^\d\s().+-]/.test(phone)) return "Phone number can only have numbers, spaces, dashes (-) and parentheses.";
+      const count = phoneDigits(phone).length;
+      if (count < 10) return `Phone number needs 10 digits, including the area code. You've entered ${count}.`;
+      if (count > 10) return `Phone number has ${count} digits. Enter just 10, like (704) 555-0123.`;
+      return "";
+    },
+    password(value) {
+      if (!value) return "Create a password.";
+      if (!PASSWORD_RULES.length(value)) return `Password must be at least 8 characters. Add ${8 - value.length} more.`;
+      if (!PASSWORD_RULES.upper(value)) return "Add at least one uppercase letter (A–Z).";
+      if (!PASSWORD_RULES.number(value)) return "Add at least one number (0–9).";
+      return "";
+    },
+  };
+
+  function setFieldState(input, message) {
+    const field = input.closest(".field");
+    const output = document.getElementById(`${input.id}-msg`);
+    const icon = message ? "i-alert" : "i-check";
+    field.classList.toggle("is-invalid", Boolean(message));
+    field.classList.toggle("is-valid", !message);
+    input.setAttribute("aria-invalid", String(Boolean(message)));
+    output.innerHTML = `<svg class="icon" aria-hidden="true"><use href="#${icon}"></use></svg><span>${escapeHtml(message || input.dataset.success)}</span>`;
+  }
+
+  function clearFieldState(input) {
+    input.closest(".field").classList.remove("is-invalid", "is-valid");
+    input.removeAttribute("aria-invalid");
+    document.getElementById(`${input.id}-msg`).textContent = "";
+  }
+
+  function initSignup() {
+    const form = document.querySelector("[data-signup]");
+    if (!form) return;
+
+    const inputs = Array.from(form.querySelectorAll(".field__input"));
+    const { phone, password, confirm } = form.elements;
+    const submit = form.querySelector('button[type="submit"]');
+    const formError = form.querySelector("[data-form-error]");
+    const touched = new Set();
+    let submitting = false;
+
+    const checks = {
+      ...SIGNUP_CHECKS,
+      confirm(value) {
+        if (!value) return "Re-enter your password to confirm it.";
+        if (value !== password.value) return "Passwords don't match. Make sure both are typed exactly the same.";
+        return "";
+      },
+    };
+
+    function check(input) {
+      const message = checks[input.name](input.value);
+      setFieldState(input, message);
+      return !message;
+    }
+
+    function updateFormError() {
+      if (formError.hidden) return;
+      const count = form.querySelectorAll(".field.is-invalid").length;
+      formError.textContent = count === 1 ? "Fix the 1 field marked in red above." : `Fix the ${count} fields marked in red above.`;
+      formError.hidden = count === 0;
+    }
+
+    function updatePasswordRules() {
+      form.querySelectorAll("[data-rule]").forEach((item) => {
+        const met = PASSWORD_RULES[item.dataset.rule](password.value);
+        item.classList.toggle("is-met", met);
+        item.querySelector("[data-rule-status]").textContent = met ? ", done" : ", not yet";
+      });
+    }
+
+    inputs.forEach((input) => {
+      // Errors wait until the user leaves the field once, but a correct value is confirmed right away.
+      input.addEventListener("input", () => {
+        if (touched.has(input)) check(input);
+        else if (!checks[input.name](input.value)) setFieldState(input, "");
+        else clearFieldState(input);
+
+        if (input === password) {
+          updatePasswordRules();
+          if (touched.has(confirm) || confirm.value) check(confirm);
+        }
+        updateFormError();
+      });
+
+      input.addEventListener("blur", () => {
+        if (submitting) return;
+        touched.add(input);
+        if (check(input) && input === phone) phone.value = formatPhone(phone.value);
+        updateFormError();
+      });
+    });
+
+    form.querySelectorAll("[data-show-password]").forEach((button) => {
+      const input = document.getElementById(button.getAttribute("aria-controls"));
+      button.addEventListener("mousedown", (event) => event.preventDefault());
+      button.addEventListener("click", () => {
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        button.textContent = show ? "Hide" : "Show";
+        button.setAttribute("aria-pressed", String(show));
+      });
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (submitting) return;
+
+      inputs.forEach((input) => touched.add(input));
+      const results = inputs.map(check);
+      const firstInvalid = inputs[results.indexOf(false)];
+      if (firstInvalid) {
+        formError.hidden = false;
+        updateFormError();
+        firstInvalid.focus();
+        return;
+      }
+
+      formError.hidden = true;
+      submitting = true;
+      inputs.forEach((input) => (input.readOnly = true));
+      setBusy(submit, true, "Creating account…");
+      await wait(NETWORK_DELAY + 200);
+
+      const saved = store.write("profile", {
+        name: form.elements.name.value.trim(),
+        email: form.elements.email.value.trim(),
+        phone: formatPhone(phone.value),
+      });
+
+      if (!saved) {
+        submitting = false;
+        inputs.forEach((input) => (input.readOnly = false));
+        setBusy(submit, false);
+        formError.textContent = "We couldn't create your account. Make sure your browser allows saving data, then try again.";
+        formError.hidden = false;
+        return;
+      }
+
+      window.location.assign("welcome.html");
+    });
   }
 
   /* ---------- Loading -> Welcome -> Home ---------- */
@@ -913,5 +1111,6 @@
   initSearch();
   initApplications();
   initSignIn();
+  initSignup();
   initWelcome();
 })();

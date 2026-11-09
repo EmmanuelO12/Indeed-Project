@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create an Account | Indeed</title>
+  <meta name="description" content="Create an Indeed account to apply for jobs and track your applications.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <script>
+    try {
+      document.documentElement.dataset.theme =
+        localStorage.getItem("theme") === "dark" ? "dark" : "light";
+    } catch (e) {}
+  </script>
+  <script src="js/main.js" defer></script>
+</head>
+
+<body>
+  <!-- Icons -->
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></symbol>
+  </svg>
+
+  <!-- Create Account -->
+  <main id="main" class="auth">
+    <a class="back-link" href="index.html">
+      <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
+      Back to Indeed
+    </a>
+
+    <div class="auth__card">
+      <p class="logo auth__logo" aria-hidden="true">indeed</p>
+      <h1 class="auth__title">Create an account</h1>
+      <p class="auth__subtitle">Fill in your details to start applying for jobs. All fields are required.</p>
+
+      <form class="auth__form" data-signup novalidate>
+        <div class="field">
+          <label class="field__label" for="signup-name">Full name</label>
+          <div class="field__control">
+            <input class="field__input" id="signup-name" name="name" type="text" autocomplete="name" data-success="Looks good." aria-describedby="signup-name-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+          </div>
+          <p class="field__msg" id="signup-name-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="signup-email">Email address</label>
+          <div class="field__control">
+            <input class="field__input" id="signup-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" data-success="Email looks good." aria-describedby="signup-email-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+          </div>
+          <p class="field__msg" id="signup-email-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="signup-phone">Phone number</label>
+          <p class="field__hint" id="signup-phone-hint">Include your area code.</p>
+          <div class="field__control">
+            <input class="field__input" id="signup-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(704) 555-0123" data-success="Phone number looks good." aria-describedby="signup-phone-hint signup-phone-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+          </div>
+          <p class="field__msg" id="signup-phone-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="field field--password">
+          <label class="field__label" for="signup-password">Password</label>
+          <div class="field__control">
+            <input class="field__input" id="signup-password" name="password" type="password" autocomplete="new-password" data-success="Strong password." aria-describedby="signup-password-rules signup-password-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+            <button type="button" class="field__toggle" data-show-password aria-controls="signup-password" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <ul class="field__rules" id="signup-password-rules" aria-label="Password must have">
+            <li data-rule="length"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>At least 8 characters<span class="visually-hidden" data-rule-status>, not yet</span></li>
+            <li data-rule="upper"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>One uppercase letter (A–Z)<span class="visually-hidden" data-rule-status>, not yet</span></li>
+            <li data-rule="number"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>One number (0–9)<span class="visually-hidden" data-rule-status>, not yet</span></li>
+          </ul>
+          <p class="field__msg" id="signup-password-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="field field--password">
+          <label class="field__label" for="signup-confirm">Confirm password</label>
+          <div class="field__control">
+            <input class="field__input" id="signup-confirm" name="confirm" type="password" autocomplete="new-password" data-success="Passwords match." aria-describedby="signup-confirm-msg">
+            <svg class="icon field__icon field__icon--valid" aria-hidden="true"><use href="#i-check"></use></svg>
+            <svg class="icon field__icon field__icon--invalid" aria-hidden="true"><use href="#i-alert"></use></svg>
+            <button type="button" class="field__toggle" data-show-password aria-controls="signup-confirm" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <p class="field__msg" id="signup-confirm-msg" aria-live="polite"></p>
+        </div>
+
+        <p class="form-error" role="alert" data-form-error hidden></p>
+        <button class="btn btn-primary btn-block" type="submit">Create account</button>
+      </form>
+
+      <p class="auth__switch">Already have an account? <a href="signin.html">Sign in</a></p>
+    </div>
+  </main>
+</body>
+</html>
