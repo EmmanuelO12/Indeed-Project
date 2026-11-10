@@ -908,7 +908,11 @@
   }
 
   /* ---------- Create account ---------- */
-  
+  const PASSWORD_RULES = {
+    length: (value) => value.length >= 8,
+    upper: (value) => /[A-Z]/.test(value),
+    number: (value) => /\d/.test(value),
+  };
 
   const phoneDigits = (value) => {
     const digits = value.replace(/\D/g, "");
