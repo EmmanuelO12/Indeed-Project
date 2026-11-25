@@ -897,6 +897,50 @@ button {
   color: var(--text-muted);
 }
 
+/* Sits above the card's full-size link so it can be pressed on its own. */
+.save-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.save-btn .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.save-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.save-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.save-btn[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.save-btn[aria-pressed="true"] .icon {
+  fill: currentColor;
+}
+
 .job-card__skeleton-lines {
   display: grid;
   flex: 1;

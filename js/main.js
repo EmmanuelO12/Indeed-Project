@@ -276,6 +276,41 @@
     return `Posted ${days} days ago`;
   };
 
+  const savedJobs = {
+    list: () => store.read("savedJobs", []).filter(findJob),
+    has: (id) => savedJobs.list().includes(id),
+    set(id, saved) {
+      const others = savedJobs.list().filter((savedId) => savedId !== id);
+      return store.write("savedJobs", saved ? [id, ...others] : others);
+    },
+  };
+
+  const saveButton = (job) => {
+    const saved = savedJobs.has(job.id);
+    return `
+      <button type="button" class="save-btn" data-save="${job.id}" aria-pressed="${saved}" aria-label="Save ${job.title} at ${job.company}">
+        ${icon("i-bookmark")}<span>${saved ? "Saved" : "Save"}</span>
+      </button>`;
+  };
+
+  function initSaveButtons() {
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-save]");
+      if (!button) return;
+      const job = findJob(button.dataset.save);
+      const saved = button.getAttribute("aria-pressed") !== "true";
+      if (!savedJobs.set(job.id, saved)) {
+        showToast("Couldn't save this job. Please try again.", "error");
+        return;
+      }
+      document.querySelectorAll(`[data-save="${job.id}"]`).forEach((match) => {
+        match.setAttribute("aria-pressed", String(saved));
+        match.querySelector("span").textContent = saved ? "Saved" : "Save";
+      });
+      showToast(saved ? `${job.title} saved to My Applications` : `${job.title} removed from Saved`);
+    });
+  }
+
   function jobCard(job, { link, extraClass = "", style = "" }) {
     return `
       <li class="job-card ${extraClass}" data-job-id="${job.id}"${style ? ` style="${style}"` : ""}>
@@ -294,6 +329,7 @@
         <p class="job-card__summary">${job.summary}</p>
         <div class="job-card__footer">
           <span>${postedLabel(job.posted)}</span>
+          ${saveButton(job)}
         </div>
       </li>`;
   }
@@ -800,7 +836,28 @@
         </div>
       </li>`;
 
+    const savedCard = (job, i) => `
+      <li class="app-card is-entering" style="animation-delay: ${i * 50}ms">
+        <span class="job-card__badge" style="--badge: ${badgeColor(job.company)}" aria-hidden="true">${companyInitials(job.company)}</span>
+        <div class="app-card__body">
+          <span class="tag">Saved</span>
+          <h2 class="app-card__title">${job.title}</h2>
+          <p class="app-card__meta">${job.company}<br>${job.location} · ${shortPay(job.pay)}</p>
+        </div>
+        <div class="app-card__actions">
+          <a class="btn btn-primary btn-sm" href="home.html?job=${job.id}">View job</a>
+          <button type="button" class="btn btn-neutral btn-sm" data-unsave="${job.id}">Unsave</button>
+        </div>
+      </li>`;
+
     function render() {
+      if (activeFilter === "saved") {
+        const saved = savedJobs.list().map(findJob);
+        list.innerHTML = saved.length
+          ? saved.map(savedCard).join("")
+          : `<li class="panel empty-state"><span class="empty-state__icon">${icon("i-bookmark")}</span><h2>No saved jobs yet</h2><p>Tap Save on any job to keep it here.</p><a class="btn btn-primary" href="search.html">Find jobs</a></li>`;
+        return;
+      }
       const allowed = FILTERS[activeFilter];
       const visible = APPLICATION_ORDER.map(findJob).filter((job) => !allowed || allowed.includes(statuses[job.id]));
       list.innerHTML = visible.length
@@ -839,8 +896,15 @@
       const update = event.target.closest("[data-update]");
       const more = event.target.closest("[data-more]");
       const archive = event.target.closest("[data-archive]");
+      const unsave = event.target.closest("[data-unsave]");
 
-      if (update) {
+      if (unsave) {
+        const job = findJob(unsave.dataset.unsave);
+        if (savedJobs.set(job.id, false)) {
+          render();
+          showToast(`${job.title} removed from Saved`);
+        } else showToast("Couldn't update your saved jobs. Please try again.", "error");
+      } else if (update) {
         editingId = update.dataset.update;
         const job = findJob(editingId);
         dialogJob.textContent = `${job.title} · ${job.company}`;
@@ -1304,6 +1368,7 @@
   initNav();
   initDropdowns();
   initSuggestions();
+  initSaveButtons();
   initHome();
   initSearch();
   initApplications();
