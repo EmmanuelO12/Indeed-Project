@@ -139,16 +139,11 @@
     },
   ];
 
-  const WHAT_SUGGESTIONS = [
-    "Data Analyst",
-    "UX/UI Designer",
-    "Software Engineer",
-    "Product Designer",
-    "Front End Developer",
-    "Business Analyst",
-    "Project Manager",
-    "Customer Service Representative",
-  ];
+  /* From js/jobs.js. These only appear in search results, never in the recommended lists. */
+  const SEARCH_ONLY_JOBS = Array.isArray(window.SEARCH_JOBS) ? window.SEARCH_JOBS : [];
+  const SEARCH_ONLY_IDS = new Set(SEARCH_ONLY_JOBS.map((job) => job.id));
+
+  const WHAT_SUGGESTIONS = [...new Set([...JOBS, ...SEARCH_ONLY_JOBS].map((job) => job.title))];
 
   const CURRENT_LOCATION = "Current Location";
   const WHERE_SUGGESTIONS = [
@@ -201,7 +196,7 @@
   };
 
   /* Jobs posted on the Employers page come first, so the newest jobs show at the top. */
-  const allJobs = () => [...postedJobs.list().map(safeJob), ...JOBS];
+  const allJobs = () => [...postedJobs.list().map(safeJob), ...JOBS, ...SEARCH_ONLY_JOBS];
   const findJob = (id) => allJobs().find((job) => job.id === id);
   const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="#${name}"></use></svg>`;
 
@@ -268,7 +263,7 @@
       .join("")
       .toUpperCase();
 
-  const COMPANIES = [...new Set(JOBS.map((job) => job.company))];
+  const COMPANIES = [...new Set([...JOBS, ...SEARCH_ONLY_JOBS].map((job) => job.company))];
   const badgeColor = (name) => {
     let index = COMPANIES.indexOf(name);
     if (index < 0) index = [...name].reduce((sum, char) => sum + char.charCodeAt(0), 0);
@@ -708,6 +703,7 @@
     function filterJobs(what, where) {
       const words = what.toLowerCase().split(/\s+/).filter(Boolean);
       const place = where === CURRENT_LOCATION ? "" : where.toLowerCase();
+      if (!words.length && !place) return jobs.filter((job) => !SEARCH_ONLY_IDS.has(job.id));
       return jobs.filter((job) => {
         const haystack = [job.title, job.company, ...job.keywords].join(" ").toLowerCase();
         const matchesWhat = words.every((word) => haystack.includes(word));
@@ -1733,9 +1729,9 @@
 
   const SCOUT_JOB_ANSWERS = {
     remote: () => ({
-      text: "These jobs are fully remote, so you can work from anywhere:",
+      text: "Here are some fully remote jobs, so you can work from anywhere:",
       empty: "There aren't any remote jobs right now. Check back soon, new jobs are posted every day.",
-      jobs: allJobs().filter((job) => job.location === "Remote"),
+      jobs: allJobs().filter((job) => job.location === "Remote").slice(0, 4),
       link: `<a class="scout-msg__link" href="search.html?l=Remote">See remote jobs on Search</a>`,
     }),
     pay: () => ({
