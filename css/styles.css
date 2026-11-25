@@ -1834,6 +1834,252 @@ a.is-loading {
   }
 }
 
+/* ---------- Career Scout ---------- */
+.scout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 900px;
+  padding: var(--space-4);
+}
+
+.scout__log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: clamp(340px, 55vh, 580px);
+  margin: 0;
+  padding: var(--space-2);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.scout__log:focus-visible {
+  border-radius: 12px;
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.scout-msg {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  max-width: min(100%, 620px);
+}
+
+.scout-msg--user {
+  align-self: flex-end;
+}
+
+.scout-msg__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.scout-msg__avatar .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.scout-msg__bubble {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: 18px 18px 18px 4px;
+  background: var(--surface-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.scout-msg--user .scout-msg__bubble {
+  border-radius: 18px 18px 4px 18px;
+  background: var(--indeed-blue);
+  color: var(--white);
+}
+
+.scout-msg__tips {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.scout-msg__link {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.scout-jobs {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scout-job {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.scout-job .job-card__badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: var(--fs-sm);
+}
+
+.scout-job__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.scout-job__title {
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.scout-job__title:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.scout-job__meta {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.scout-job__pay {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--success);
+}
+
+.scout-job .save-btn {
+  flex: none;
+  font-size: var(--fs-xs);
+}
+
+.scout-typing {
+  display: inline-flex;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.scout-typing span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: typing 1s ease-in-out infinite;
+}
+
+.scout-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.scout-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: none;
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.scout__suggestions {
+  display: flex;
+  gap: var(--space-2);
+  padding-bottom: var(--space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.scout__suggestions::-webkit-scrollbar {
+  display: none;
+}
+
+.scout__suggestions .chip {
+  min-height: 36px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.scout__suggestions .chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.scout__form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.scout__input {
+  flex: 1;
+  padding-right: var(--space-4);
+  border-radius: var(--radius-pill);
+}
+
+.scout__send {
+  flex: none;
+  width: 48px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+/* Phones need the room for job details, and the button's label still names the job. */
+@media (max-width: 767px) {
+  .scout-msg__avatar {
+    display: none;
+  }
+
+  .scout-job .save-btn {
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .scout-job .save-btn span {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .scout {
+    padding: var(--space-5);
+  }
+
+  .scout__suggestions {
+    flex-wrap: wrap;
+  }
+}
+
 /* ---------- Form fields ---------- */
 .field {
   display: flex;

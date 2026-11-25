@@ -1689,6 +1689,182 @@
     render();
   }
 
+  /* ---------- Career Scout ---------- */
+  const SCOUT_TIPS = {
+    interview: {
+      intro: "Good preparation makes interviews much less stressful. Here's what I'd do:",
+      tips: [
+        "Research the company: what it makes, who its customers are, and any recent news.",
+        "Reread the job post and match each requirement to something you've done.",
+        "Practice your answers out loud using the STAR method: Situation, Task, Action, Result.",
+        "Prepare two or three questions for them, like what success looks like in the first 90 days.",
+        "Test your camera and internet the day before a video interview, or plan your route for an in-person one.",
+        "Send a short thank-you email within 24 hours.",
+      ],
+    },
+    resume: {
+      intro: "Recruiters often skim a resume in under a minute, so keep it clear and focused:",
+      tips: [
+        "Your name, phone, email, city, and a LinkedIn or portfolio link at the top.",
+        "A two-line summary of who you are and the job you want.",
+        "Your experience, newest job first, with bullet points that start with action verbs.",
+        "Numbers that show results, like “Cut report time by 30%.”",
+        "Skills that use the same words as the job post.",
+        "Education and certifications. Keep it to one page if you have less than 10 years of experience.",
+      ],
+    },
+    cover: {
+      intro: "A cover letter explains why you want this job, not just any job. Keep it under one page:",
+      tips: [
+        "Address a real person if you can find the hiring manager's name.",
+        "Open with the role you're applying for and one sentence on why it excites you.",
+        "Pick one or two achievements that match what the job post asks for.",
+        "Show you know the company by mentioning its product, mission, or a recent project.",
+        "Close by thanking them and saying you'd welcome an interview.",
+      ],
+    },
+  };
+
+  const yearlyPay = (job) => {
+    const amounts = (job.pay.match(/\d[\d,.]*/g) || []).map((amount) => Number(amount.replace(/,/g, "")));
+    const top = Math.max(0, ...amounts);
+    return /hour/.test(job.pay) ? top * 2080 : top;
+  };
+
+  const SCOUT_JOB_ANSWERS = {
+    remote: () => ({
+      text: "These jobs are fully remote, so you can work from anywhere:",
+      empty: "There aren't any remote jobs right now. Check back soon, new jobs are posted every day.",
+      jobs: allJobs().filter((job) => job.location === "Remote"),
+      link: `<a class="scout-msg__link" href="search.html?l=Remote">See remote jobs on Search</a>`,
+    }),
+    pay: () => ({
+      text: "These jobs pay the most, based on the top of each pay range:",
+      jobs: [...allJobs()].sort((a, b) => yearlyPay(b) - yearlyPay(a)).slice(0, 3),
+    }),
+    newest: () => ({
+      text: "These are the most recently posted jobs:",
+      jobs: [...allJobs()].sort((a, b) => a.posted - b.posted).slice(0, 3),
+    }),
+  };
+
+  /* Checked in order, so "cover letter for my resume" counts as a cover letter question. */
+  const SCOUT_TOPICS = [
+    ["cover", /cover letter/],
+    ["resume", /\b(resume|résumé|cv)\b/],
+    ["interview", /interview/],
+    ["remote", /\b(remote|from home|wfh)\b/],
+    ["pay", /\b(pay|pays|paid|salary|salaries|money|highest|earn)\b/],
+    ["newest", /\b(new|newest|latest|recent)\b/],
+    ["thanks", /\b(thanks|thank you|thx)\b/],
+    ["hello", /^(hi|hello|hey)\b/],
+  ];
+
+  const STOP_WORDS = new Set(
+    "a an and any are can do for find from get give have i im in is it job jobs like looking me my near of on or please show some that the there to want what where which with work you".split(" ")
+  );
+
+  const words = (text) => text.toLowerCase().split(/[^\p{L}\d]+/u).filter(Boolean);
+
+  function matchJobs(text) {
+    const wanted = words(text).filter((word) => word.length > 1 && !STOP_WORDS.has(word));
+    if (!wanted.length) return [];
+    return allJobs()
+      .map((job) => {
+        const haystack = words([job.title, job.company, job.location, ...job.keywords].join(" "));
+        return { job, score: wanted.filter((word) => haystack.some((part) => part.startsWith(word))).length };
+      })
+      .filter((match) => match.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map((match) => match.job);
+  }
+
+  const scoutJob = (job) => `
+    <li class="scout-job">
+      <span class="job-card__badge" style="--badge: ${badgeColor(job.company)}" aria-hidden="true">${companyInitials(job.company)}</span>
+      <div class="scout-job__body">
+        <a class="scout-job__title" href="home.html?job=${job.id}">${job.title}</a>
+        <p class="scout-job__meta">${job.company} · ${job.location}</p>
+        <p class="scout-job__pay">${shortPay(job.pay)}</p>
+      </div>
+      ${saveButton(job)}
+    </li>`;
+
+  function scoutReply(topic, text) {
+    if (SCOUT_TIPS[topic]) {
+      const { intro, tips } = SCOUT_TIPS[topic];
+      return `<p>${intro}</p><ul class="scout-msg__tips">${tips.map((tip) => `<li>${tip}</li>`).join("")}</ul>`;
+    }
+    if (SCOUT_JOB_ANSWERS[topic]) {
+      const answer = SCOUT_JOB_ANSWERS[topic]();
+      if (!answer.jobs.length) return `<p>${answer.empty}</p>`;
+      return `<p>${answer.text}</p><ul class="scout-jobs">${answer.jobs.map(scoutJob).join("")}</ul>${answer.link || ""}`;
+    }
+    if (topic === "hello") return "<p>Hi there! What can I help you with today? Pick a question below or type your own.</p>";
+    if (topic === "thanks") return "<p>You're welcome! Good luck with your search. Ask me anything else whenever you like.</p>";
+
+    const jobs = matchJobs(text);
+    if (jobs.length) {
+      return `<p>Here ${jobs.length === 1 ? "is a job" : "are jobs"} that match “${escapeHtml(text)}”:</p><ul class="scout-jobs">${jobs.map(scoutJob).join("")}</ul>`;
+    }
+    return "<p>I'm not sure about that one yet. I can find jobs by title, skill, or city, and give tips on resumes, cover letters, and interviews. Try one of the questions below.</p>";
+  }
+
+  function initScout() {
+    const log = document.querySelector("[data-scout-log]");
+    if (!log) return;
+    const form = document.querySelector("[data-scout-form]");
+    const input = form.elements.message;
+    const suggestions = document.querySelector("[data-scout-suggestions]");
+    let busy = false;
+
+    const addMessage = (from, html, label = from === "bot" ? "Career Scout said:" : "You said:") => {
+      const item = document.createElement("li");
+      item.className = `scout-msg scout-msg--${from} is-entering`;
+      item.innerHTML = `
+        ${from === "bot" ? `<span class="scout-msg__avatar" aria-hidden="true">${icon("i-compass")}</span>` : ""}
+        <div class="scout-msg__bubble"><span class="visually-hidden">${label}</span>${html}</div>`;
+      log.appendChild(item);
+      log.scrollTo({ top: log.scrollHeight, behavior: "smooth" });
+      return item;
+    };
+
+    async function ask(topic, text) {
+      if (busy) return;
+      busy = true;
+      addMessage("user", `<p>${escapeHtml(text)}</p>`);
+      log.setAttribute("aria-busy", "true");
+      const typing = addMessage("bot", '<span class="scout-typing"><span></span><span></span><span></span></span>', "Career Scout is typing");
+      await wait(NETWORK_DELAY + 300);
+      typing.remove();
+      log.removeAttribute("aria-busy");
+      addMessage("bot", scoutReply(topic, text));
+      busy = false;
+    }
+
+    suggestions.addEventListener("click", (event) => {
+      const chip = event.target.closest("[data-ask]");
+      if (chip) ask(chip.dataset.ask, chip.textContent.trim());
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text || busy) return;
+      const topic = SCOUT_TOPICS.find(([, pattern]) => pattern.test(text.toLowerCase()));
+      input.value = "";
+      ask(topic && topic[0], text);
+    });
+
+    const profile = store.read("profile", {}) || {};
+    const firstName = String(profile.name || "").trim().split(/\s+/)[0];
+    addMessage(
+      "bot",
+      `<p>Hi${firstName ? ` ${escapeHtml(firstName)}` : ""}! I'm Career Scout, your job search helper. I can find jobs that fit you and share tips for resumes, cover letters, and interviews.</p><p>Pick a question below or type your own.</p>`
+    );
+  }
+
   /* ---------- Loading -> Welcome -> Home ---------- */
   function initWelcome() {
     const splash = document.querySelector("[data-welcome]");
@@ -1709,5 +1885,6 @@
   initSignup();
   initProfile();
   initPostJob();
+  initScout();
   initWelcome();
 })();

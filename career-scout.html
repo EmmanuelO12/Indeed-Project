@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Career Scout | Indeed</title>
-  <meta name="description" content="Get personalized career tips and job matches based on your skills and interests.">
+  <meta name="description" content="Chat with Career Scout for job matches, resume help, and interview tips.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap">
@@ -40,6 +40,8 @@
     <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
     <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8M15 7h6v6"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17l-6-4-6 4z"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></symbol>
   </svg>
 
   <a class="skip-link" href="#main">Skip to content</a>
@@ -86,11 +88,25 @@
 
   <main id="main" class="page">
     <h1 class="page-title">Career Scout</h1>
-    <section class="panel empty-state">
-      <span class="empty-state__icon"><svg class="icon" aria-hidden="true"><use href="#i-compass"></use></svg></span>
-      <h2>Career Scout is coming soon</h2>
-      <p>Get personalized career tips and job matches based on your skills and interests.</p>
-      <a class="btn btn-primary" href="search.html">Explore Jobs</a>
+    <section class="panel scout" aria-label="Chat with Career Scout">
+      <ol class="scout__log" role="log" aria-live="polite" aria-label="Conversation" tabindex="0" data-scout-log></ol>
+
+      <div class="scout__suggestions" role="group" aria-label="Suggested questions" data-scout-suggestions>
+        <button type="button" class="chip" data-ask="remote">Find remote jobs for me</button>
+        <button type="button" class="chip" data-ask="pay">Which jobs pay the most?</button>
+        <button type="button" class="chip" data-ask="newest">Show me the newest jobs</button>
+        <button type="button" class="chip" data-ask="interview">How do I prepare for an interview?</button>
+        <button type="button" class="chip" data-ask="resume">What should my resume include?</button>
+        <button type="button" class="chip" data-ask="cover">How do I write a cover letter?</button>
+      </div>
+
+      <form class="scout__form" data-scout-form autocomplete="off">
+        <label class="visually-hidden" for="scout-input">Ask Career Scout a question</label>
+        <input class="field__input scout__input" id="scout-input" name="message" type="text" maxlength="200" placeholder="Ask a question">
+        <button class="btn btn-primary scout__send" type="submit" aria-label="Send">
+          <svg class="icon" aria-hidden="true"><use href="#i-send"></use></svg>
+        </button>
+      </form>
     </section>
   </main>
 
