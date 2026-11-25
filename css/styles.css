@@ -1085,16 +1085,6 @@ button {
   border-radius: var(--radius-card);
 }
 
-.app-card__thumb {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-btn);
-  background: var(--surface-muted);
-  color: var(--text-muted);
-}
-
 .app-card__title {
   margin-top: var(--space-2);
   font-size: var(--fs-xl);
@@ -2107,9 +2097,10 @@ a.is-loading {
     border-radius: 0;
   }
 
-  .app-card__thumb {
+  .app-card .job-card__badge {
     width: 56px;
     height: 56px;
+    font-size: var(--fs-lg);
   }
 
   .app-card__actions {

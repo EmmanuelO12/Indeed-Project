@@ -818,7 +818,7 @@
 
     const card = (job, i) => `
       <li class="app-card is-entering" style="animation-delay: ${i * 50}ms">
-        <div class="app-card__thumb">${icon("i-image")}</div>
+        <span class="job-card__badge" style="--badge: ${badgeColor(job.company)}" aria-hidden="true">${companyInitials(job.company)}</span>
         <div class="app-card__body">
           <span class="tag">${STATUS_LABELS[statuses[job.id]]}</span>
           <h2 class="app-card__title">${job.title}</h2>
