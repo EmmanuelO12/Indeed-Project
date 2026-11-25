@@ -200,7 +200,9 @@
     },
   };
 
-  const findJob = (id) => JOBS.find((job) => job.id === id);
+  /* Jobs posted on the Employers page come first, so the newest jobs show at the top. */
+  const allJobs = () => [...postedJobs.list().map(safeJob), ...JOBS];
+  const findJob = (id) => allJobs().find((job) => job.id === id);
   const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="#${name}"></use></svg>`;
 
   const escapeHtml = (text) =>
@@ -210,7 +212,7 @@
 
   /* There is no real server, so data "requests" resolve after a short, realistic delay. */
   const NETWORK_DELAY = 600;
-  const fetchJobs = () => wait(NETWORK_DELAY).then(() => JOBS);
+  const fetchJobs = () => wait(NETWORK_DELAY).then(allJobs);
 
   /* ---------- Loading buttons ---------- */
   function setBusy(element, busy, label) {
@@ -1367,7 +1369,10 @@
 
   /* ---------- Employers: post, edit and delete jobs ---------- */
   const postedJobs = {
-    list: () => store.read("postedJobs", []),
+    list: () => {
+      const jobs = store.read("postedJobs", []);
+      return Array.isArray(jobs) ? jobs : [];
+    },
     save: (jobs) => store.write("postedJobs", jobs),
   };
 
@@ -1483,6 +1488,7 @@
     location: escapeHtml(job.location),
     summary: escapeHtml(job.summary),
     duties: job.duties.map(escapeHtml),
+    keywords: [job.type, job.payPeriod === "hour" ? "hourly" : "salary"],
     posted: daysSince(job.createdAt),
   });
 
