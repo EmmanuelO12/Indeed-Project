@@ -789,7 +789,6 @@ button {
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-5);
-  overflow: hidden;
   background: var(--surface);
   border: 2px solid var(--border);
   border-radius: var(--radius-card);
@@ -798,24 +797,6 @@ button {
 
 .job-card:hover {
   border-color: var(--gray-400);
-}
-
-/* Blue strip on the left edge for the hovered or selected card. */
-.job-card:not(.job-card--skeleton)::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 5px;
-  background: var(--accent);
-  transform: scaleY(0);
-  transition: transform 0.2s ease;
-}
-
-.job-card:hover::before,
-.job-card.is-selected::before {
-  transform: scaleY(1);
 }
 
 .job-card__head {
