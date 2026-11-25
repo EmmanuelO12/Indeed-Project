@@ -259,6 +259,17 @@ button {
   font-weight: 400;
 }
 
+.btn-danger {
+  background: var(--surface);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-danger:hover {
+  background: var(--danger);
+  color: var(--white);
+}
+
 .btn-sm {
   min-height: var(--tap);
   padding: var(--space-2) var(--space-4);
@@ -1731,6 +1742,98 @@ a.is-loading {
   }
 }
 
+/* ---------- Employers: post a job ---------- */
+.post-job__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.post-job__head .btn {
+  align-self: flex-start;
+}
+
+.post-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 720px;
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+  animation: fade-up 0.3s ease-out;
+}
+
+.post-form[hidden],
+.post-job__head .btn[hidden] {
+  display: none;
+}
+
+.post-form__row {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.post-form__pay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.post-form__pay legend {
+  padding: 0;
+}
+
+.post-form__actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.post-form__actions .btn {
+  flex: 1;
+}
+
+.job-card__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.job-card__actions .icon {
+  width: 16px;
+  height: 16px;
+}
+
+@media (min-width: 768px) {
+  .post-job__head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .post-form__row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .post-form__row--pay {
+    grid-template-columns: 1fr 1fr 160px;
+  }
+
+  .post-form__actions .btn {
+    flex: none;
+    min-width: 160px;
+  }
+
+  .post-list .card-list {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+}
+
 /* ---------- Form fields ---------- */
 .field {
   display: flex;
@@ -1766,6 +1869,42 @@ a.is-loading {
 
 .field__input::placeholder {
   color: var(--text-muted);
+}
+
+.field__input--select {
+  cursor: pointer;
+}
+
+.field__control:has(.field__input--select) .field__icon {
+  right: 36px;
+}
+
+.field__input--area {
+  min-height: 96px;
+  padding: var(--space-3) 44px var(--space-3) var(--space-4);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.field__control:has(.field__input--area) .field__icon {
+  top: var(--space-4);
+  transform: none;
+}
+
+.field__label--small {
+  font-size: var(--fs-sm);
+}
+
+.field__count {
+  margin-top: calc(var(--space-1) * -1);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.field__count.is-over {
+  font-weight: 600;
+  color: var(--danger);
 }
 
 .field.is-invalid .field__input {
@@ -1939,7 +2078,7 @@ a.is-loading {
 }
 
 @media (hover: hover) {
-  .job-card:not(.job-card--skeleton):hover {
+  .job-card:not(.job-card--skeleton, .job-card--static):hover {
     z-index: 2;
     translate: 0 -4px;
     scale: 1.03;

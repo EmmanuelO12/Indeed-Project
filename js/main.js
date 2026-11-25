@@ -260,13 +260,18 @@
   const companyInitials = (name) =>
     name
       .split(/\s+/)
+      .filter((word) => /^[\p{L}\d]/u.test(word))
       .slice(0, 2)
       .map((word) => word[0])
       .join("")
       .toUpperCase();
 
   const COMPANIES = [...new Set(JOBS.map((job) => job.company))];
-  const badgeColor = (name) => BADGE_COLORS[Math.max(COMPANIES.indexOf(name), 0) % BADGE_COLORS.length];
+  const badgeColor = (name) => {
+    let index = COMPANIES.indexOf(name);
+    if (index < 0) index = [...name].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return BADGE_COLORS[index % BADGE_COLORS.length];
+  };
 
   const shortPay = (pay) => pay.replace(/,000/g, "K").replace(" a year", "/yr").replace(" an hour", "/hr");
 
@@ -311,7 +316,7 @@
     });
   }
 
-  function jobCard(job, { link, extraClass = "", style = "" }) {
+  function jobCard(job, { link, extraClass = "", style = "", actions = saveButton(job) }) {
     return `
       <li class="job-card ${extraClass}" data-job-id="${job.id}"${style ? ` style="${style}"` : ""}>
         <div class="job-card__head">
@@ -329,7 +334,7 @@
         <p class="job-card__summary">${job.summary}</p>
         <div class="job-card__footer">
           <span>${postedLabel(job.posted)}</span>
-          ${saveButton(job)}
+          ${actions}
         </div>
       </li>`;
   }
@@ -1360,6 +1365,324 @@
     });
   }
 
+  /* ---------- Employers: post, edit and delete jobs ---------- */
+  const postedJobs = {
+    list: () => store.read("postedJobs", []),
+    save: (jobs) => store.write("postedJobs", jobs),
+  };
+
+  const daysSince = (time) => Math.max(0, Math.floor((Date.now() - time) / 86400000));
+  const parseMoney = (value) => Number(value.replace(/[$,\s]/g, ""));
+  const money = (amount) => `$${amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+
+  const PAY_LIMITS = { year: [10000, 1000000], hour: [7.25, 500] };
+  const SUMMARY_MIN = 20;
+  const SUMMARY_MAX = 160;
+  const DUTY_MAX = 120;
+  const DUTIES_MAX = 6;
+
+  const dutyLines = (value) => value.split("\n").map((line) => line.trim()).filter(Boolean);
+
+  function checkPay(value, period, which) {
+    const text = value.trim();
+    if (!text) return `Enter the "${which}" amount.`;
+    if (!/^\$?\s*[\d,]+(\.\d{1,2})?$/.test(text)) return "Use numbers only, like 45000 or 45,000.";
+    const amount = parseMoney(text);
+    const [low, high] = PAY_LIMITS[period];
+    if (period === "hour") {
+      if (amount < low) return "Hourly pay can't be lower than $7.25, the federal minimum wage.";
+      if (amount > high) return `Hourly pay should be at most ${money(high)}. Did you mean per year?`;
+    } else {
+      if (amount < low) return `Yearly pay should be at least ${money(low)}. Did you mean per hour?`;
+      if (amount > high) return `Yearly pay should be at most ${money(high)}.`;
+    }
+    return "";
+  }
+
+  const POST_CHECKS = {
+    title(value) {
+      const title = value.trim();
+      if (!title) return "Enter a job title.";
+      if (!/[A-Za-z]/.test(title)) return "Job title needs at least one letter.";
+      if (title.length < 2) return "Job title must be at least 2 characters long.";
+      if (title.length > 60) return `Job title can be at most 60 characters. Remove ${title.length - 60}.`;
+      return "";
+    },
+    company(value) {
+      const company = value.trim();
+      if (!company) return "Enter your company name.";
+      if (!/[A-Za-z]/.test(company)) return "Company name needs at least one letter.";
+      if (company.length < 2) return "Company name must be at least 2 characters long.";
+      if (company.length > 60) return `Company name can be at most 60 characters. Remove ${company.length - 60}.`;
+      return "";
+    },
+    location(value) {
+      const location = value.trim();
+      if (!location) return "Enter a location, like Charlotte, NC, or type Remote.";
+      if (/^remote$/i.test(location)) return "";
+      if (!location.includes(",")) return "Add a comma and the state after the city, like Charlotte, NC.";
+      const [city, state, ...extra] = location.split(",");
+      if (extra.length) return "Use just one comma, between the city and state.";
+      if (!/^[A-Za-zÀ-ÖØ-öø-ÿ .'-]{2,}$/.test(city.trim())) return "Enter the city using letters, like Charlotte.";
+      if (!/^[A-Za-z]{2}$/.test(state.trim())) return "Use the 2-letter state code after the comma, like NC.";
+      return "";
+    },
+    type(value) {
+      return value ? "" : "Choose a job type.";
+    },
+    payMin(value, form) {
+      return checkPay(value, form.elements.payPeriod.value, "From");
+    },
+    payMax(value, form) {
+      const period = form.elements.payPeriod.value;
+      const message = checkPay(value, period, "To");
+      if (message) return message;
+      const min = form.elements.payMin.value;
+      if (!checkPay(min, period, "From") && parseMoney(value) < parseMoney(min)) {
+        return `The "To" amount can't be lower than the "From" amount (${money(parseMoney(min))}).`;
+      }
+      return "";
+    },
+    summary(value) {
+      const summary = value.trim();
+      if (!summary) return "Write a short summary of the job.";
+      if (summary.length < SUMMARY_MIN) return `Summary needs at least ${SUMMARY_MIN} characters. Add ${SUMMARY_MIN - summary.length} more.`;
+      if (summary.length > SUMMARY_MAX) return `Summary can be at most ${SUMMARY_MAX} characters. Remove ${summary.length - SUMMARY_MAX}.`;
+      return "";
+    },
+    duties(value) {
+      const lines = dutyLines(value);
+      if (!lines.length) return "Add at least one task, like \"Answer customer emails\".";
+      if (lines.length > DUTIES_MAX) return `Add at most ${DUTIES_MAX} tasks. Remove ${lines.length - DUTIES_MAX}.`;
+      const short = lines.findIndex((line) => line.length < 3);
+      if (short >= 0) return `Task ${short + 1} is too short. Describe it in a few words.`;
+      const long = lines.findIndex((line) => line.length > DUTY_MAX);
+      if (long >= 0) return `Task ${long + 1} is too long. Keep each task under ${DUTY_MAX} characters.`;
+      return "";
+    },
+  };
+
+  const formatLocation = (value) => {
+    const location = value.trim();
+    if (/^remote$/i.test(location)) return "Remote";
+    const [city, state] = location.split(",");
+    const cityName = city.trim().replace(/\s+/g, " ").replace(/(^|[\s-])(\p{L})/gu, (match, gap, letter) => gap + letter.toUpperCase());
+    return `${cityName}, ${state.trim().toUpperCase()}`;
+  };
+
+  const formatPay = (job) => {
+    const range = job.payMin === job.payMax ? money(job.payMin) : `${money(job.payMin)} – ${money(job.payMax)}`;
+    return `${range} ${job.payPeriod === "hour" ? "an hour" : "a year"}`;
+  };
+
+  /* Text typed by the employer is escaped before it goes into the page. */
+  const safeJob = (job) => ({
+    ...job,
+    title: escapeHtml(job.title),
+    company: escapeHtml(job.company),
+    location: escapeHtml(job.location),
+    summary: escapeHtml(job.summary),
+    duties: job.duties.map(escapeHtml),
+    posted: daysSince(job.createdAt),
+  });
+
+  function initPostJob() {
+    const form = document.querySelector("[data-post-job]");
+    const list = document.querySelector("[data-my-posts]");
+    if (!form || !list) return;
+
+    const toggle = document.querySelector("[data-post-toggle]");
+    const heading = document.querySelector("[data-post-heading]");
+    const cancel = form.querySelector("[data-post-cancel]");
+    const submit = form.querySelector("[data-post-submit]");
+    const formError = form.querySelector("[data-form-error]");
+    const counter = form.querySelector('[data-count="summary"]');
+    const inputs = Array.from(form.querySelectorAll(".field__input")).filter((input) => POST_CHECKS[input.name]);
+    const { payMin, payMax, payPeriod, location, summary } = form.elements;
+    const defaultHeading = heading.textContent;
+    const touched = new Set();
+    let editingId = null;
+    let submitting = false;
+
+    function check(input) {
+      const message = POST_CHECKS[input.name](input.value, form);
+      setFieldState(input, message);
+      return !message;
+    }
+
+    const recheck = (input) => (touched.has(input) || input.value) && check(input);
+
+    function updateCounter() {
+      const length = summary.value.trim().length;
+      counter.textContent = `${length} / ${SUMMARY_MAX}`;
+      counter.classList.toggle("is-over", length > SUMMARY_MAX);
+    }
+
+    function resetForm() {
+      form.reset();
+      touched.clear();
+      inputs.forEach(clearFieldState);
+      formError.hidden = true;
+      updateCounter();
+    }
+
+    function openForm(job) {
+      resetForm();
+      editingId = job ? job.id : null;
+      if (job) {
+        ["title", "company", "location", "type", "summary"].forEach((name) => (form.elements[name].value = job[name]));
+        payMin.value = job.payMin.toLocaleString("en-US");
+        payMax.value = job.payMax.toLocaleString("en-US");
+        payPeriod.value = job.payPeriod;
+        form.elements.duties.value = job.duties.join("\n");
+        updateCounter();
+      }
+      heading.textContent = job ? "Edit job post" : "Post a new job";
+      submit.textContent = job ? "Save changes" : "Post job";
+      form.hidden = false;
+      toggle.hidden = true;
+      toggle.setAttribute("aria-expanded", "true");
+      form.scrollIntoView({ behavior: "smooth", block: "start" });
+      form.elements.title.focus({ preventScroll: true });
+    }
+
+    function closeForm() {
+      resetForm();
+      editingId = null;
+      heading.textContent = defaultHeading;
+      form.hidden = true;
+      toggle.hidden = false;
+      toggle.setAttribute("aria-expanded", "false");
+    }
+
+    const actions = (job) => `
+      <div class="job-card__actions">
+        <button type="button" class="btn btn-neutral btn-sm" data-edit-post="${job.id}" aria-label="Edit ${job.title}">${icon("i-edit")}Edit</button>
+        <button type="button" class="btn btn-danger btn-sm" data-delete-post="${job.id}" aria-label="Delete ${job.title}">${icon("i-trash")}Delete</button>
+      </div>`;
+
+    function render() {
+      const jobs = postedJobs.list().map(safeJob);
+      list.innerHTML = jobs.length
+        ? jobs
+            .map((job, i) =>
+              jobCard(job, { link: job.title, extraClass: "job-card--static is-entering", style: `animation-delay: ${i * 50}ms`, actions: actions(job) })
+            )
+            .join("")
+        : `<li class="panel empty-state"><span class="empty-state__icon">${icon("i-briefcase")}</span><h3>No job posts yet</h3><p>Select Post a job to create your first one. It will show up here.</p></li>`;
+    }
+
+    inputs.forEach((input) => {
+      const handler = () => {
+        if (touched.has(input)) check(input);
+        else if (!POST_CHECKS[input.name](input.value, form)) setFieldState(input, "");
+        else clearFieldState(input);
+
+        if (input === payMin) recheck(payMax);
+        if (input === summary) updateCounter();
+        updateFieldCount(form, formError);
+      };
+      input.addEventListener(input.tagName === "SELECT" ? "change" : "input", handler);
+
+      input.addEventListener("blur", () => {
+        if (submitting) return;
+        touched.add(input);
+        if (check(input)) {
+          if (input === location) location.value = formatLocation(location.value);
+          if (input === payMin || input === payMax) input.value = parseMoney(input.value).toLocaleString("en-US");
+        }
+        updateFieldCount(form, formError);
+      });
+    });
+
+    payPeriod.addEventListener("change", () => {
+      [payMin, payMax].forEach(recheck);
+      updateFieldCount(form, formError);
+    });
+
+    toggle.addEventListener("click", () => openForm(null));
+
+    cancel.addEventListener("click", () => {
+      closeForm();
+      toggle.focus();
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (submitting) return;
+
+      inputs.forEach((input) => touched.add(input));
+      const results = inputs.map(check);
+      const firstInvalid = inputs[results.indexOf(false)];
+      if (firstInvalid) {
+        formError.hidden = false;
+        updateFieldCount(form, formError);
+        firstInvalid.focus();
+        return;
+      }
+      formError.hidden = true;
+
+      const jobs = postedJobs.list();
+      const existing = jobs.find((job) => job.id === editingId);
+      const job = {
+        id: existing ? existing.id : `post-${Date.now()}`,
+        title: form.elements.title.value.trim(),
+        company: form.elements.company.value.trim(),
+        location: formatLocation(location.value),
+        type: form.elements.type.value,
+        payMin: parseMoney(payMin.value),
+        payMax: parseMoney(payMax.value),
+        payPeriod: payPeriod.value,
+        summary: summary.value.trim(),
+        duties: dutyLines(form.elements.duties.value),
+        createdAt: existing ? existing.createdAt : Date.now(),
+      };
+      job.pay = formatPay(job);
+
+      submitting = true;
+      form.inert = true;
+      setBusy(submit, true, existing ? "Saving…" : "Posting…");
+      await wait(NETWORK_DELAY + 200);
+      submitting = false;
+      form.inert = false;
+      setBusy(submit, false);
+
+      const next = existing ? jobs.map((item) => (item.id === job.id ? job : item)) : [job, ...jobs];
+      if (!postedJobs.save(next)) {
+        formError.textContent = "We couldn't save this job post. Make sure your browser allows saving data, then try again.";
+        formError.hidden = false;
+        return;
+      }
+
+      closeForm();
+      render();
+      showToast(existing ? `Changes to ${job.title} saved` : `${job.title} posted`);
+      list.querySelector(`[data-job-id="${job.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    list.addEventListener("click", (event) => {
+      const edit = event.target.closest("[data-edit-post]");
+      const remove = event.target.closest("[data-delete-post]");
+      const jobs = postedJobs.list();
+
+      if (edit) {
+        openForm(jobs.find((job) => job.id === edit.dataset.editPost));
+      } else if (remove) {
+        const job = jobs.find((item) => item.id === remove.dataset.deletePost);
+        if (!window.confirm(`Delete "${job.title}"? Job seekers won't see it anymore.`)) return;
+        if (!postedJobs.save(jobs.filter((item) => item.id !== job.id))) {
+          showToast("Couldn't delete this job post. Please try again.", "error");
+          return;
+        }
+        if (editingId === job.id) closeForm();
+        render();
+        showToast(`${job.title} deleted`);
+      }
+    });
+
+    render();
+  }
+
   /* ---------- Loading -> Welcome -> Home ---------- */
   function initWelcome() {
     const splash = document.querySelector("[data-welcome]");
@@ -1379,5 +1702,6 @@
   initSignIn();
   initSignup();
   initProfile();
+  initPostJob();
   initWelcome();
 })();
