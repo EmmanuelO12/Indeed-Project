@@ -12,6 +12,7 @@
       location: "Charlotte, NC",
       type: "Full-time",
       pay: "$68,000 – $82,000 a year",
+      posted: 2,
       keywords: ["data", "analytics", "sql", "excel", "tableau"],
       summary:
         "Turn raw data into clear insights that help product and operations teams make better decisions.",
@@ -28,6 +29,7 @@
       location: "Remote",
       type: "Full-time",
       pay: "$72,000 – $90,000 a year",
+      posted: 0,
       keywords: ["design", "figma", "ux", "ui", "product", "prototype"],
       summary:
         "Design simple, accessible experiences for web and mobile products used by thousands of people every day.",
@@ -44,6 +46,7 @@
       location: "Raleigh, NC",
       type: "Full-time",
       pay: "$95,000 – $120,000 a year",
+      posted: 5,
       keywords: ["developer", "javascript", "react", "engineering", "code", "web"],
       summary: "Build and improve the web applications that power our customer platform.",
       duties: [
@@ -59,6 +62,7 @@
       location: "Durham, NC",
       type: "Full-time",
       pay: "$80,000 – $98,000 a year",
+      posted: 1,
       keywords: ["design", "figma", "ux", "ui", "prototype", "research"],
       summary:
         "Shape the end-to-end experience of a patient scheduling app, from early research to final hand-off.",
@@ -75,6 +79,7 @@
       location: "Greensboro, NC",
       type: "Full-time",
       pay: "$75,000 – $95,000 a year",
+      posted: 3,
       keywords: ["frontend", "developer", "html", "css", "javascript", "react", "web", "responsive"],
       summary: "Turn designs into fast, accessible, responsive websites that work on every screen size.",
       duties: [
@@ -90,6 +95,7 @@
       location: "Charlotte, NC",
       type: "Full-time",
       pay: "$70,000 – $85,000 a year",
+      posted: 7,
       keywords: ["business", "analyst", "requirements", "data", "excel", "process"],
       summary:
         "Connect business teams and IT by gathering requirements and finding ways to improve everyday processes.",
@@ -106,6 +112,7 @@
       location: "Salisbury, NC",
       type: "Full-time",
       pay: "$78,000 – $92,000 a year",
+      posted: 4,
       keywords: ["project", "manager", "management", "agile", "planning", "scrum"],
       summary: "Lead projects from kickoff to delivery, keeping teams on schedule and on budget.",
       duties: [
@@ -121,6 +128,7 @@
       location: "Remote",
       type: "Part-time",
       pay: "$17 – $21 an hour",
+      posted: 1,
       keywords: ["customer", "service", "support", "call center", "representative", "help desk"],
       summary: "Help customers by phone, chat, and email, solving problems with a friendly attitude.",
       duties: [
@@ -247,11 +255,65 @@
     toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 3200);
   }
 
+  const BADGE_COLORS = ["#0251cb", "#0f7b6c", "#b5480b", "#7b3fbf", "#c2185b", "#2e7d32", "#00838f", "#5d4037"];
+
+  const companyInitials = (name) =>
+    name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase();
+
+  const COMPANIES = [...new Set(JOBS.map((job) => job.company))];
+  const badgeColor = (name) => BADGE_COLORS[Math.max(COMPANIES.indexOf(name), 0) % BADGE_COLORS.length];
+
+  const shortPay = (pay) => pay.replace(/,000/g, "K").replace(" a year", "/yr").replace(" an hour", "/hr");
+
+  const postedLabel = (days) => {
+    if (days === 0) return "Posted today";
+    if (days === 1) return "Posted yesterday";
+    return `Posted ${days} days ago`;
+  };
+
+  function jobCard(job, { link, extraClass = "", style = "" }) {
+    return `
+      <li class="job-card ${extraClass}" data-job-id="${job.id}"${style ? ` style="${style}"` : ""}>
+        <div class="job-card__head">
+          <span class="job-card__badge" style="--badge: ${badgeColor(job.company)}" aria-hidden="true">${companyInitials(job.company)}</span>
+          <div>
+            <h3 class="job-card__title">${link}</h3>
+            <p class="job-card__company">${job.company}</p>
+          </div>
+        </div>
+        <ul class="job-card__tags" aria-label="Job details">
+          <li class="job-card__tag"><svg class="icon" aria-hidden="true"><use href="#i-briefcase"></use></svg>${job.type}</li>
+          <li class="job-card__tag"><svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg>${job.location}</li>
+          <li class="job-card__tag job-card__tag--pay"><svg class="icon" aria-hidden="true"><use href="#i-salary"></use></svg>${shortPay(job.pay)}</li>
+        </ul>
+        <p class="job-card__summary">${job.summary}</p>
+        <div class="job-card__footer">
+          <span>${postedLabel(job.posted)}</span>
+        </div>
+      </li>`;
+  }
+
   const skeletonJobCard = `
     <li class="job-card job-card--skeleton" aria-hidden="true">
-      <span class="skeleton skeleton--title"></span>
-      <span class="skeleton skeleton--line"></span>
-      <span class="skeleton skeleton--line skeleton--short"></span>
+      <div class="job-card__head">
+        <span class="skeleton skeleton--thumb"></span>
+        <div class="job-card__skeleton-lines">
+          <span class="skeleton skeleton--title"></span>
+          <span class="skeleton skeleton--short"></span>
+        </div>
+      </div>
+      <div class="job-card__tags">
+        <span class="skeleton skeleton--tag"></span>
+        <span class="skeleton skeleton--tag"></span>
+        <span class="skeleton skeleton--tag"></span>
+      </div>
+      <span class="skeleton skeleton--wide"></span>
+      <span class="skeleton skeleton--short"></span>
     </li>`;
 
   const skeletonAppCard = `
@@ -525,7 +587,21 @@
   function initHome() {
     const detail = document.querySelector("[data-job-detail]");
     if (!detail) return;
-    const cards = Array.from(document.querySelectorAll(".job-card[data-job-id]"));
+
+    const list = document.querySelector("[data-home-jobs]");
+    list.innerHTML = list.dataset.homeJobs
+      .split(",")
+      .map(findJob)
+      .filter(Boolean)
+      .map((job, i) =>
+        jobCard(job, {
+          link: `<button type="button" class="job-card__link" aria-pressed="false">${job.title}</button>`,
+          extraClass: "is-entering",
+          style: `animation-delay: ${i * 50}ms`,
+        })
+      )
+      .join("");
+    const cards = Array.from(list.querySelectorAll(".job-card[data-job-id]"));
 
     let request = 0;
 
@@ -593,12 +669,12 @@
       });
     }
 
-    const jobCard = (job, i) => `
-      <li class="job-card is-entering" style="animation-delay: ${i * 50}ms">
-        <h3 class="job-card__title"><a class="job-card__link" href="home.html?job=${job.id}">${job.title}</a></h3>
-        <p class="job-card__meta">${job.company}</p>
-        <p class="job-card__meta">${job.location}</p>
-      </li>`;
+    const searchCard = (job, i) =>
+      jobCard(job, {
+        link: `<a class="job-card__link" href="home.html?job=${job.id}">${job.title}</a>`,
+        extraClass: "is-entering",
+        style: `animation-delay: ${i * 50}ms`,
+      });
 
     function showSkeleton() {
       shownIds = null;
@@ -632,7 +708,7 @@
       shownIds = ids;
       results.removeAttribute("aria-busy");
       results.innerHTML = matches.length
-        ? matches.map(jobCard).join("")
+        ? matches.map(searchCard).join("")
         : `<li class="panel empty-state is-entering">
             <span class="empty-state__icon">${icon("i-search")}</span>
             <h3>No jobs found</h3>

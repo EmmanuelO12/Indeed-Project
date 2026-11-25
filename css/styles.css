@@ -29,6 +29,7 @@
   --logo: #003a9b;
   --danger: #c5221f;
   --success: #137333;
+  --success-soft: #e6f4ea;
   --shimmer: rgba(255, 255, 255, 0.65);
   --shadow: 0 4px 4px -4px rgba(12, 12, 13, 0.05), 0 16px 32px -4px rgba(12, 12, 13, 0.1);
 
@@ -72,6 +73,7 @@
   --logo: #6ea1ff;
   --danger: #f28b82;
   --success: #81c995;
+  --success-soft: #1d3326;
   --shimmer: rgba(255, 255, 255, 0.07);
   --shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.6);
   color-scheme: dark;
@@ -785,9 +787,9 @@ button {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  min-height: 160px;
-  padding: var(--space-4) var(--space-5);
+  gap: var(--space-3);
+  padding: var(--space-5);
+  overflow: hidden;
   background: var(--surface);
   border: 2px solid var(--border);
   border-radius: var(--radius-card);
@@ -796,6 +798,114 @@ button {
 
 .job-card:hover {
   border-color: var(--gray-400);
+}
+
+/* Blue strip on the left edge for the hovered or selected card. */
+.job-card:not(.job-card--skeleton)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+
+.job-card:hover::before,
+.job-card.is-selected::before {
+  transform: scaleY(1);
+}
+
+.job-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.job-card__badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--badge, var(--accent));
+  font-size: var(--fs-base);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--white);
+}
+
+.job-card__company {
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.job-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.job-card__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.job-card__tag .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.job-card__tag--pay {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.job-card__summary {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--text-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.job-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.job-card__skeleton-lines {
+  display: grid;
+  flex: 1;
+  gap: var(--space-2);
+}
+
+.job-card .job-card__skeleton-lines .skeleton,
+.job-card .job-card__tags .skeleton {
+  margin-top: 0;
 }
 
 .job-card.is-selected {
@@ -809,10 +919,9 @@ button {
 }
 
 .job-card__title {
-  margin-bottom: var(--space-2);
-  font-size: var(--fs-xl);
+  font-size: var(--fs-lg);
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .job-card__link {
@@ -835,11 +944,6 @@ button {
   position: absolute;
   inset: 0;
   border-radius: var(--radius-card);
-}
-
-.job-card__meta {
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
 }
 
 /* ---------- Home: selected job description ---------- */
